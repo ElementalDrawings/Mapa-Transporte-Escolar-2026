@@ -9,6 +9,7 @@ const Map = () => {
     const mapContainer = useRef<HTMLDivElement>(null);
     const map = useRef<maplibregl.Map | null>(null);
     const busMarker = useRef<maplibregl.Marker | null>(null);
+    const hasCentered = useRef(false);
     const [status, setStatus] = useState<'online' | 'offline' | 'waiting'>('waiting');
 
     // Filtro de mapa con persistencia
@@ -66,6 +67,16 @@ const Map = () => {
                             .addTo(map.current);
                     } else {
                         busMarker.current.setLngLat([data.lng, data.lat]);
+                    }
+
+                    // Auto-centrado inicial
+                    if (!hasCentered.current) {
+                        map.current.flyTo({
+                            center: [data.lng, data.lat],
+                            zoom: 16,
+                            speed: 1.2
+                        });
+                        hasCentered.current = true;
                     }
                 } else {
                     setStatus('waiting');
