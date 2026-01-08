@@ -195,6 +195,22 @@
   font-weight: 600;
 }
 
+.map-card-yellow .status-badge {
+  background: #000000;
+  color: #ffffff;
+  border: none;
+  white-space: nowrap;
+  /* Evita que se rompa en dos líneas */
+  font-weight: 800;
+  padding: 6px 12px;
+}
+
+.map-card-yellow .status-badge .dot {
+  background: #ff4d4f;
+  /* Punto rojo brillante */
+  box-shadow: 0 0 10px #ff4d4f;
+}
+
 @keyframes pulse {
   0% {
     opacity: 1;
