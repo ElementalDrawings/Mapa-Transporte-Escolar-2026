@@ -90,7 +90,7 @@ const Map = () => {
                 gap: '20px',
                 zIndex: 1000
             }}>
-                <div className="map-icon-circle" style={{ background: 'white', color: 'black', padding: '10px', borderRadius: '12px' }}>
+                <div className="map-icon-circle" style={{ background: '#1a1a1a', color: 'white', padding: '10px', borderRadius: '12px' }}>
                     <MapIcon size={24} />
                 </div>
                 <div style={{ flex: 1 }}>
