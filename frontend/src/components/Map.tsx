@@ -1,13 +1,20 @@
 import { useEffect, useRef, useState } from 'react';
 import maplibregl from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
-import { Signal, SignalLow, Map as MapIcon } from 'lucide-react';
+import { Signal, SignalLow, Map as MapIcon, Palette } from 'lucide-react';
+
+type MapFilter = 'normal' | 'dark' | 'blue';
 
 const Map = () => {
     const mapContainer = useRef<HTMLDivElement>(null);
     const map = useRef<maplibregl.Map | null>(null);
     const busMarker = useRef<maplibregl.Marker | null>(null);
     const [status, setStatus] = useState<'online' | 'offline' | 'waiting'>('waiting');
+
+    // Filtro de mapa con persistencia
+    const [filter, setFilter] = useState<MapFilter>(() => {
+        return (localStorage.getItem('map-filter') as MapFilter) || 'normal';
+    });
 
     useEffect(() => {
         if (map.current) return;
@@ -73,9 +80,56 @@ const Map = () => {
         return () => clearInterval(intervalId);
     }, []);
 
+    const changeFilter = (newFilter: MapFilter) => {
+        setFilter(newFilter);
+        localStorage.setItem('map-filter', newFilter);
+    };
+
     return (
         <div className="map-wrap" style={{ position: 'relative', width: '100%', height: '100%' }}>
-            <div ref={mapContainer} className="map" style={{ width: '100%', height: '100%' }} />
+            {/* Contenedor del mapa con clase dinámica para el filtro */}
+            <div
+                ref={mapContainer}
+                className={`map map-filter-${filter}`}
+                style={{ width: '100%', height: '100%' }}
+            />
+
+            {/* Selector de Filtros Estilo Pestaña */}
+            <div className="map-filter-selector glass-card fade-in" style={{
+                position: 'absolute',
+                top: '20px',
+                right: '20px',
+                zIndex: 1000,
+                display: 'flex',
+                padding: '5px',
+                gap: '5px',
+                borderRadius: '12px'
+            }}>
+                <button
+                    onClick={() => changeFilter('normal')}
+                    className={`filter-btn ${filter === 'normal' ? 'active' : ''}`}
+                    title="Modo Normal"
+                >
+                    Claro
+                </button>
+                <button
+                    onClick={() => changeFilter('dark')}
+                    className={`filter-btn ${filter === 'dark' ? 'active' : ''}`}
+                    title="Modo Oscuro"
+                >
+                    Oscuro
+                </button>
+                <button
+                    onClick={() => changeFilter('blue')}
+                    className={`filter-btn ${filter === 'blue' ? 'active' : ''}`}
+                    title="Tono Azulado"
+                >
+                    Azul
+                </button>
+                <div style={{ display: 'flex', alignItems: 'center', padding: '0 8px', color: 'var(--text-muted)' }}>
+                    <Palette size={16} />
+                </div>
+            </div>
 
             <div className="map-overlay-bottom map-card-yellow fade-in" style={{
                 position: 'absolute',
@@ -111,8 +165,37 @@ const Map = () => {
             </div>
 
             <style>{`
+                /* Filtros CSS para el mapa */
+                .map-filter-dark img {
+                    filter: invert(100%) hue-rotate(180deg) brightness(95%) contrast(90%);
+                }
+                .map-filter-blue img {
+                    filter: hue-rotate(190deg) brightness(85%) saturate(140%) contrast(110%);
+                }
+                
+                /* Estilos para el selector de filtros */
+                .filter-btn {
+                    background: transparent;
+                    border: none;
+                    color: white;
+                    padding: 8px 15px;
+                    border-radius: 8px;
+                    font-size: 0.8rem;
+                    font-weight: 600;
+                    cursor: pointer;
+                    transition: all 0.2s;
+                }
+                .filter-btn.active {
+                    background: var(--primary);
+                    color: black;
+                }
+                .filter-btn:hover:not(.active) {
+                    background: rgba(255, 255, 255, 0.1);
+                }
+
                 .bus-marker-premium {
                     cursor: pointer;
+                    z-index: 2;
                 }
                 .bus-icon-container {
                     position: relative;
@@ -139,6 +222,11 @@ const Map = () => {
                 @keyframes markerPulse {
                     0% { transform: scale(1); opacity: 0.6; }
                     100% { transform: scale(2.5); opacity: 0; }
+                }
+
+                /* Asegurar que los controles de MapLibre no se vean afectados por los filtros */
+                .maplibregl-ctrl {
+                    filter: none !important;
                 }
             `}</style>
         </div>
