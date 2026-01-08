@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import maplibregl from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
-import { Signal, SignalLow, Map as MapIcon, Palette, RotateCw } from 'lucide-react';
+import { Signal, SignalLow, Map as MapIcon, RotateCw } from 'lucide-react';
 
 type MapFilter = 'normal' | 'dark' | 'blue';
 
