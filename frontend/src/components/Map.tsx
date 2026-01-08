@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import maplibregl from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
-import { Signal, SignalLow, Map as MapIcon, Palette } from 'lucide-react';
+import { Signal, SignalLow, Map as MapIcon, Palette, RotateCw } from 'lucide-react';
 
 type MapFilter = 'normal' | 'dark' | 'blue';
 
@@ -11,6 +11,7 @@ const Map = () => {
     const busMarker = useRef<maplibregl.Marker | null>(null);
     const hasCentered = useRef(false);
     const [status, setStatus] = useState<'online' | 'offline' | 'waiting'>('waiting');
+    const [address, setAddress] = useState<string>('Buscando dirección...');
 
     // Filtro de mapa con persistencia
     const [filter, setFilter] = useState<MapFilter>(() => {
@@ -20,6 +21,13 @@ const Map = () => {
     useEffect(() => {
         if (map.current) return;
         if (!mapContainer.current) return;
+
+        // Recuperar última vista guardada o usar defecto
+        const savedCenter = localStorage.getItem('map-center');
+        const savedZoom = localStorage.getItem('map-zoom');
+
+        const initialCenter: [number, number] = savedCenter ? JSON.parse(savedCenter) : [-72.7502, -38.7639];
+        const initialZoom: number = savedZoom ? parseFloat(savedZoom) : 15;
 
         map.current = new maplibregl.Map({
             container: mapContainer.current,
@@ -35,12 +43,47 @@ const Map = () => {
                 },
                 layers: [{ id: 'osm-tiles', type: 'raster', source: 'osm-tiles' }]
             },
-            center: [-72.7502, -38.7639],
-            zoom: 15
+            center: initialCenter,
+            zoom: initialZoom
+        });
+
+        // Guardar posición al moverse
+        map.current.on('moveend', () => {
+            if (map.current) {
+                const center = map.current.getCenter();
+                localStorage.setItem('map-center', JSON.stringify([center.lng, center.lat]));
+                localStorage.setItem('map-zoom', map.current.getZoom().toString());
+            }
         });
 
         map.current.addControl(new maplibregl.NavigationControl(), 'bottom-right');
     }, []);
+
+    // Función para obtener nombre de la calle (Reverse Geocoding)
+    const getStreetName = async (lat: number, lng: number) => {
+        try {
+            const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`, {
+                headers: {
+                    'User-Agent': 'TransporteEscolarApp/1.0'
+                }
+            });
+            const data = await response.json();
+            if (data.address) {
+                // Priorizar nombre de calle -> ruta -> barrio
+                const street = data.address.road || data.address.pedestrian || data.address.suburb || 'Ubicación en mapa';
+                const city = data.address.city || data.address.town || data.address.village || '';
+
+                // Formatear dirección
+                let formattedAddress = street;
+                if (city) formattedAddress += `, ${city}`;
+
+                setAddress(formattedAddress);
+            }
+        } catch (error) {
+            console.warn('Error obteniendo dirección:', error);
+            // No cambiamos el estado para dejar el último conocido o el mensaje por defecto
+        }
+    };
 
     useEffect(() => {
         const fetchLocation = async () => {
@@ -51,6 +94,11 @@ const Map = () => {
                 if (data.lat && data.lng) {
                     setStatus('online');
                     if (!map.current) return;
+
+                    // Actualizar dirección 
+                    // Nota: En producción real deberíamos usar debounce para no saturar la API
+                    // Aquí confiamos en el intervalo de 3s
+                    getStreetName(data.lat, data.lng);
 
                     if (!busMarker.current) {
                         const el = document.createElement('div');
@@ -69,8 +117,10 @@ const Map = () => {
                         busMarker.current.setLngLat([data.lng, data.lat]);
                     }
 
-                    // Auto-centrado inicial
-                    if (!hasCentered.current) {
+                    // Auto-centrado inicial (solo si NO hay una posición guardada explícita reciente, o podemos omitirlo si preferimos persistencia total)
+                    // En este caso, priorizamos la persistencia del usuario si ya movió el mapa.
+                    // Pero si es la primera carga absoluta, centramos.
+                    if (!hasCentered.current && !localStorage.getItem('map-center')) {
                         map.current.flyTo({
                             center: [data.lng, data.lat],
                             zoom: 16,
@@ -80,6 +130,7 @@ const Map = () => {
                     }
                 } else {
                     setStatus('waiting');
+                    setAddress('Esperando señal...');
                 }
             } catch (error) {
                 setStatus('offline');
@@ -87,7 +138,7 @@ const Map = () => {
         };
 
         const intervalId = setInterval(fetchLocation, 3000);
-        fetchLocation();
+        fetchLocation(); // Initial call
         return () => clearInterval(intervalId);
     }, []);
 
@@ -96,16 +147,19 @@ const Map = () => {
         localStorage.setItem('map-filter', newFilter);
     };
 
+    const handleRefresh = () => {
+        window.location.reload();
+    };
+
     return (
         <div className="map-wrap" style={{ position: 'relative', width: '100%', height: '100%' }}>
-            {/* Contenedor del mapa con clase dinámica para el filtro */}
             <div
                 ref={mapContainer}
                 className={`map map-filter-${filter}`}
                 style={{ width: '100%', height: '100%' }}
             />
 
-            {/* Selector de Filtros Estilo Pestaña */}
+            {/* Selector de Filtros */}
             <div className="map-filter-selector glass-card fade-in" style={{
                 position: 'absolute',
                 top: '20px',
@@ -137,11 +191,18 @@ const Map = () => {
                 >
                     Azul
                 </button>
-                <div style={{ display: 'flex', alignItems: 'center', padding: '0 8px', color: 'var(--text-muted)' }}>
-                    <Palette size={16} />
-                </div>
+                <div style={{ width: '1px', background: 'var(--glass-border)', margin: '0 5px' }}></div>
+                <button
+                    onClick={handleRefresh}
+                    className="filter-btn"
+                    title="Refrescar Aplicación"
+                    style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                >
+                    <RotateCw size={16} />
+                </button>
             </div>
 
+            {/* Tarjeta de Información Inferior */}
             <div className="map-overlay-bottom map-card-yellow fade-in" style={{
                 position: 'absolute',
                 bottom: '30px',
@@ -158,9 +219,11 @@ const Map = () => {
                 <div className="map-icon-circle" style={{ background: '#1a1a1a', color: 'white', padding: '10px', borderRadius: '12px' }}>
                     <MapIcon size={24} />
                 </div>
-                <div style={{ flex: 1 }}>
+                <div style={{ flex: 1, minWidth: 0 }}>
                     <h4 style={{ fontSize: '1rem', fontWeight: 600 }}>Furgón NB-2026</h4>
-                    <p style={{ fontSize: '0.8rem', opacity: 0.8 }}>Labranza, Temuco</p>
+                    <p style={{ fontSize: '0.8rem', opacity: 0.9, fontWeight: 500, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                        {address}
+                    </p>
                 </div>
                 <div className="signal-indicator">
                     {status === 'online' ? (
@@ -169,7 +232,7 @@ const Map = () => {
                         </div>
                     ) : (
                         <div style={{ color: '#555', display: 'flex', alignItems: 'center', gap: '5px', fontSize: '0.8rem' }}>
-                            <SignalLow size={16} /> {status === 'waiting' ? 'ESPERANDO' : 'SIN SEÑAL'}
+                            <SignalLow size={16} /> {status === 'waiting' ? '...' : 'OFFLINE'}
                         </div>
                     )}
                 </div>
@@ -237,7 +300,6 @@ const Map = () => {
                     100% { transform: scale(2.5); opacity: 0; }
                 }
 
-                /* Asegurar que los controles de MapLibre no se vean afectados por los filtros */
                 .maplibregl-ctrl {
                     filter: none !important;
                 }
