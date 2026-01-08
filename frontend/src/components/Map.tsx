@@ -172,7 +172,7 @@ const Map = () => {
                 }
                 .map-filter-blue canvas,
                 .map-filter-blue .maplibregl-canvas {
-                    filter: hue-rotate(190deg) brightness(85%) saturate(140%) contrast(110%);
+                    filter: grayscale(100%) sepia(100%) hue-rotate(190deg) saturate(300%) brightness(80%) contrast(110%);
                 }
                 
                 /* Estilos para el selector de filtros */
