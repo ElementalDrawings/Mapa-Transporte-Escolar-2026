@@ -7,11 +7,7 @@ import './App.css';
 function App() {
   const [role, setRole] = useState<'selecting' | 'login_driver' | 'driver' | 'parent'>('selecting');
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const [user, setUser] = useState<any>(null); // eslint-disable-line @typescript-eslint/no-explicit-any
-
-  const handleLoginSuccess = (userData: any) => { // eslint-disable-line @typescript-eslint/no-explicit-any
-    setUser(userData);
+  const handleLoginSuccess = () => {
     setRole('driver');
   };
 

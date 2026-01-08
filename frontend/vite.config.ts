@@ -34,20 +34,20 @@ export default defineConfig({
     allowedHosts: true,
     proxy: {
       '/socket.io': {
-        target: 'http://localhost:3001',
+        target: 'https://transporte-backend-fu9c.onrender.com',
         ws: true,
         changeOrigin: true
       },
       '/location': {
-        target: 'http://localhost:3001',
+        target: 'https://transporte-backend-fu9c.onrender.com',
         changeOrigin: true
       },
       '/simulate': {
-        target: 'http://localhost:3001',
+        target: 'https://transporte-backend-fu9c.onrender.com',
         changeOrigin: true
       },
       '/login': {
-        target: 'http://localhost:3001',
+        target: 'https://transporte-backend-fu9c.onrender.com',
         changeOrigin: true
       }
     }
