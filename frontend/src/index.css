@@ -1,18 +1,77 @@
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap');
+
+:root {
+  --primary: #faad14;
+  --primary-hover: #d48806;
+  --secondary: #1890ff;
+  --bg-dark: #121212;
+  --bg-card: #1e1e1e;
+  --text-main: #ffffff;
+  --text-muted: #b3b3b3;
+  --danger: #ff4d4f;
+  --success: #52c41a;
+  --glass: rgba(255, 255, 255, 0.1);
+  --glass-border: rgba(255, 255, 255, 0.2);
+  --shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+  --radius: 16px;
+}
+
 * {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
+  -webkit-tap-highlight-color: transparent;
 }
 
-html, body, #root {
+html,
+body,
+#root {
   width: 100%;
   height: 100%;
-  overflow: hidden; /* Prevent scrolling for PWA feel */
-  font-family: 'Inter', system-ui, sans-serif;
+  overflow: hidden;
+  background-color: var(--bg-dark);
+  color: var(--text-main);
+  font-family: 'Outfit', sans-serif;
+}
+
+button {
+  font-family: 'Outfit', sans-serif;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  cursor: pointer;
+}
+
+button:active {
+  transform: scale(0.95);
 }
 
 .app-container {
   width: 100vw;
   height: 100vh;
   position: relative;
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.fade-in {
+  animation: fadeIn 0.5s ease-out forwards;
+}
+
+.glass-card {
+  background: var(--glass);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--shadow);
+  border-radius: var(--radius);
 }

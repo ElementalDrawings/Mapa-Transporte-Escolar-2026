@@ -1,15 +1,14 @@
 import { useEffect, useRef, useState } from 'react';
 import maplibregl from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
-
+import { Signal, SignalLow, Map as MapIcon } from 'lucide-react';
 
 const Map = () => {
     const mapContainer = useRef<HTMLDivElement>(null);
     const map = useRef<maplibregl.Map | null>(null);
     const busMarker = useRef<maplibregl.Marker | null>(null);
-    const [debugInfo, setDebugInfo] = useState({ status: 'Desconectado ⚪', lastData: 'Esperando datos...' });
+    const [status, setStatus] = useState<'online' | 'offline' | 'waiting'>('waiting');
 
-    // Effect 1: Initialize Map (Runs once)
     useEffect(() => {
         if (map.current) return;
         if (!mapContainer.current) return;
@@ -21,37 +20,20 @@ const Map = () => {
                 sources: {
                     'osm-tiles': {
                         type: 'raster',
-                        tiles: [
-                            'https://a.tile.openstreetmap.org/{z}/{x}/{y}.png',
-                            'https://b.tile.openstreetmap.org/{z}/{x}/{y}.png',
-                            'https://c.tile.openstreetmap.org/{z}/{x}/{y}.png'
-                        ],
+                        tiles: ['https://tile.openstreetmap.org/{z}/{x}/{y}.png'],
                         tileSize: 256,
-                        attribution: '&copy; OpenStreetMap Contributors'
+                        attribution: '&copy; OpenStreetMap'
                     }
                 },
-                layers: [
-                    {
-                        id: 'osm-tiles',
-                        type: 'raster',
-                        source: 'osm-tiles',
-                        minzoom: 0,
-                        maxzoom: 19
-                    }
-                ]
+                layers: [{ id: 'osm-tiles', type: 'raster', source: 'osm-tiles' }]
             },
-            center: [-72.7502, -38.7639], // Labranza
+            center: [-72.7502, -38.7639],
             zoom: 15
         });
 
-        map.current.addControl(new maplibregl.NavigationControl(), 'top-right');
-        map.current.addControl(new maplibregl.GeolocateControl({
-            positionOptions: { enableHighAccuracy: true },
-            trackUserLocation: true
-        }), 'top-right');
+        map.current.addControl(new maplibregl.NavigationControl(), 'bottom-right');
     }, []);
 
-    // Effect 2: Polling Data (Runs independently)
     useEffect(() => {
         const fetchLocation = async () => {
             try {
@@ -59,20 +41,18 @@ const Map = () => {
                 const data = await response.json();
 
                 if (data.lat && data.lng) {
-                    setDebugInfo({ status: 'Conectado (HTTP) 🟢', lastData: JSON.stringify(data) });
-
+                    setStatus('online');
                     if (!map.current) return;
 
                     if (!busMarker.current) {
                         const el = document.createElement('div');
-                        el.className = 'bus-marker';
-                        el.style.backgroundColor = '#FFD700';
-                        el.style.width = '20px';
-                        el.style.height = '20px';
-                        el.style.borderRadius = '50%';
-                        el.style.border = '2px solid white';
-                        el.style.boxShadow = '0 0 10px rgba(0,0,0,0.5)';
-                        el.style.cursor = 'pointer';
+                        el.className = 'bus-marker-premium';
+                        el.innerHTML = `
+                            <div class="bus-icon-container">
+                                <div class="bus-pulse"></div>
+                                <div class="bus-body">🚐</div>
+                            </div>
+                        `;
 
                         busMarker.current = new maplibregl.Marker({ element: el })
                             .setLngLat([data.lng, data.lat])
@@ -81,17 +61,15 @@ const Map = () => {
                         busMarker.current.setLngLat([data.lng, data.lat]);
                     }
                 } else {
-                    setDebugInfo(prev => ({ ...prev, status: 'Esperando datos de simulación... 🟡' }));
+                    setStatus('waiting');
                 }
             } catch (error) {
-                console.error('Polling error:', error);
-                setDebugInfo(prev => ({ ...prev, status: 'Error de Conexión (HTTP) 🔴' }));
+                setStatus('offline');
             }
         };
 
-        const intervalId = setInterval(fetchLocation, 2000);
-        fetchLocation(); // Initial call
-
+        const intervalId = setInterval(fetchLocation, 3000);
+        fetchLocation();
         return () => clearInterval(intervalId);
     }, []);
 
@@ -99,23 +77,70 @@ const Map = () => {
         <div className="map-wrap" style={{ position: 'relative', width: '100%', height: '100%' }}>
             <div ref={mapContainer} className="map" style={{ width: '100%', height: '100%' }} />
 
-            {/* Debug Overlay */}
-            <div style={{
+            <div className="map-overlay-bottom glass-card fade-in" style={{
                 position: 'absolute',
-                bottom: '20px',
-                left: '20px',
-                background: 'rgba(0,0,0,0.8)',
-                color: 'white',
-                padding: '10px',
-                borderRadius: '8px',
-                fontSize: '12px',
-                maxWidth: '300px',
-                pointerEvents: 'none',
+                bottom: '30px',
+                left: '50%',
+                transform: 'translateX(-50%)',
+                width: '90%',
+                maxWidth: '400px',
+                padding: '15px 25px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '20px',
                 zIndex: 1000
             }}>
-                <p><strong>Socket:</strong> {debugInfo.status}</p>
-                <p><strong>Último Dato:</strong> {debugInfo.lastData}</p>
+                <div className="map-icon-circle" style={{ background: 'var(--primary)', color: 'black', padding: '10px', borderRadius: '12px' }}>
+                    <MapIcon size={24} />
+                </div>
+                <div style={{ flex: 1 }}>
+                    <h4 style={{ fontSize: '1rem', fontWeight: 600 }}>Furgón NB-2026</h4>
+                    <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Labranza, Temuco</p>
+                </div>
+                <div className="signal-indicator">
+                    {status === 'online' ? (
+                        <div style={{ color: 'var(--success)', display: 'flex', alignItems: 'center', gap: '5px', fontSize: '0.8rem', fontWeight: 700 }}>
+                            <Signal size={16} /> EN VIVO
+                        </div>
+                    ) : (
+                        <div style={{ color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '5px', fontSize: '0.8rem' }}>
+                            <SignalLow size={16} /> {status === 'waiting' ? 'ESPERANDO' : 'SIN SEÑAL'}
+                        </div>
+                    )}
+                </div>
             </div>
+
+            <style>{`
+                .bus-marker-premium {
+                    cursor: pointer;
+                }
+                .bus-icon-container {
+                    position: relative;
+                    width: 40px;
+                    height: 40px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    font-size: 24px;
+                    background: white;
+                    border-radius: 50%;
+                    border: 3px solid var(--primary);
+                    box-shadow: var(--shadow);
+                }
+                .bus-pulse {
+                    position: absolute;
+                    width: 100%;
+                    height: 100%;
+                    background: var(--primary);
+                    border-radius: 50%;
+                    opacity: 0.6;
+                    animation: markerPulse 2s infinite;
+                }
+                @keyframes markerPulse {
+                    0% { transform: scale(1); opacity: 0.6; }
+                    100% { transform: scale(2.5); opacity: 0; }
+                }
+            `}</style>
         </div>
     );
 };

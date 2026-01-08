@@ -2,6 +2,7 @@ import { useState } from 'react';
 import Map from './components/Map';
 import DriverDashboard from './components/DriverDashboard';
 import Login from './components/Login';
+import { Users, Truck, ArrowLeft } from 'lucide-react';
 import './App.css';
 
 function App() {
@@ -13,25 +14,36 @@ function App() {
 
   if (role === 'selecting') {
     return (
-      <div style={{ height: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '20px', background: '#333', color: 'white' }}>
-        <h1>Transporte 2026</h1>
-        <p>Selecciona tu perfil:</p>
+      <div className="selection-screen fade-in">
+        <div className="bg-dots"></div>
+        <header className="selection-header">
+          <h1>Transporte <span>2026</span></h1>
+          <p>Gestión y seguimiento en tiempo real</p>
+        </header>
 
-        <button
-          onClick={() => setRole('parent')}
-          style={{ padding: '15px 30px', fontSize: '1.2rem', borderRadius: '10px', border: 'none', background: '#1890ff', color: 'white', width: '250px', cursor: 'pointer' }}>
-          👨‍👩‍👧‍👦 Soy Apoderado
-        </button>
+        <div className="selection-cards">
+          <div className="role-card glass-card parent" onClick={() => setRole('parent')}>
+            <div className="icon-wrapper">
+              <Users size={40} />
+            </div>
+            <h3>Soy Apoderado</h3>
+            <p>Visualiza el recorrido y ubicación del furgón.</p>
+            <button className="btn-select">Ingresar Mapa</button>
+          </div>
 
-        <button
-          onClick={() => setRole('login_driver')}
-          style={{ padding: '15px 30px', fontSize: '1.2rem', borderRadius: '10px', border: 'none', background: '#faad14', color: 'white', width: '250px', cursor: 'pointer' }}>
-          🚐 Soy Conductor (Usuario)
-        </button>
-
-        <div style={{ marginTop: '20px', fontSize: '0.8rem', opacity: 0.7 }}>
-          v1.2 - Autenticación Local
+          <div className="role-card glass-card driver" onClick={() => setRole('login_driver')}>
+            <div className="icon-wrapper">
+              <Truck size={40} />
+            </div>
+            <h3>Soy Conductor</h3>
+            <p>Inicia ruta y comparte tu ubicación GPS.</p>
+            <button className="btn-select primary">Acceso Chofer</button>
+          </div>
         </div>
+
+        <footer className="selection-footer">
+          <p>Cloud Edition v1.5 • © 2026</p>
+        </footer>
       </div>
     );
   }
@@ -50,19 +62,16 @@ function App() {
       {role === 'parent' ? (
         <>
           <Map />
-          <div className="overlay-ui" style={{
-            position: 'absolute',
-            top: '10px',
-            left: '10px',
-            zIndex: 1000,
-            background: 'rgba(255,255,255,0.9)',
-            padding: '10px',
-            borderRadius: '8px',
-            boxShadow: '0 2px 6px rgba(0,0,0,0.2)'
-          }}>
-            <h3>Transporte Escolar 2026</h3>
-            <p>Estado: 🟢 En Línea</p>
-            <button onClick={() => setRole('selecting')} style={{ marginTop: '5px', padding: '5px 10px', fontSize: '0.8rem', cursor: 'pointer' }}>⬅ Cambiar Rol</button>
+          <div className="overlay-ui glass-card fade-in">
+            <div className="overlay-header">
+              <h3>Transporte Escolar</h3>
+              <div className="status-badge">
+                <span className="dot"></span> En Vivo
+              </div>
+            </div>
+            <button className="btn-back" onClick={() => setRole('selecting')}>
+              <ArrowLeft size={16} /> Salir
+            </button>
           </div>
         </>
       ) : (

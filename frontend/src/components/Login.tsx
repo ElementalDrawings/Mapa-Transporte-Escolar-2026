@@ -1,7 +1,8 @@
 import { useState } from 'react';
+import { Lock, User, ShieldAlert } from 'lucide-react';
 
 interface LoginProps {
-    onLoginSuccess: (userData: any) => void;
+    onLoginSuccess: () => void;
     onCancel: () => void;
 }
 
@@ -26,7 +27,7 @@ const Login = ({ onLoginSuccess, onCancel }: LoginProps) => {
             const data = await response.json();
 
             if (data.success) {
-                onLoginSuccess(data.user);
+                onLoginSuccess();
             } else {
                 setError(data.message || 'Error de autenticación');
             }
@@ -38,65 +39,82 @@ const Login = ({ onLoginSuccess, onCancel }: LoginProps) => {
     };
 
     return (
-        <div style={{
-            height: '100vh',
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            justifyContent: 'center',
-            background: '#f0f2f5',
-            padding: '20px'
-        }}>
-            <div style={{
-                background: 'white',
-                padding: '30px',
-                borderRadius: '15px',
-                boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
-                width: '100%',
-                maxWidth: '400px',
-                textAlign: 'center'
-            }}>
-                <h2 style={{ marginBottom: '20px', color: '#333' }}>Acceso Conductor</h2>
+        <div className="selection-screen fade-in">
+            <div className="bg-dots"></div>
 
-                {error && <div style={{ color: 'red', marginBottom: '15px' }}>{error}</div>}
+            <div className="login-card glass-card fade-in" style={{ width: '100%', maxWidth: '400px', padding: '40px' }}>
+                <div style={{ textAlign: 'center', marginBottom: '30px' }}>
+                    <div className="icon-wrapper" style={{ margin: '0 auto 20px auto' }}>
+                        <Lock size={32} />
+                    </div>
+                    <h2 style={{ fontSize: '1.8rem', fontWeight: 600 }}>Acceso Conductor</h2>
+                    <p style={{ color: 'var(--text-muted)', marginTop: '5px' }}>Ingresa tus credenciales para continuar</p>
+                </div>
 
-                <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
-                    <input
-                        type="text"
-                        placeholder="Usuario"
-                        value={username}
-                        onChange={(e) => setUsername(e.target.value)}
-                        style={{ padding: '12px', borderRadius: '8px', border: '1px solid #ddd', fontSize: '1rem' }}
-                    />
-                    <input
-                        type="password"
-                        placeholder="Contraseña"
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        style={{ padding: '12px', borderRadius: '8px', border: '1px solid #ddd', fontSize: '1rem' }}
-                    />
+                {error && (
+                    <div className="status-badge" style={{ background: 'rgba(255, 77, 79, 0.1)', color: 'var(--danger)', borderColor: 'rgba(255, 77, 79, 0.3)', marginBottom: '20px', width: '100%', justifyContent: 'center' }}>
+                        <ShieldAlert size={16} /> {error}
+                    </div>
+                )}
+
+                <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                    <div className="input-group">
+                        <div style={{ position: 'relative' }}>
+                            <User size={18} style={{ position: 'absolute', left: '15px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
+                            <input
+                                type="text"
+                                placeholder="Nombre de usuario"
+                                value={username}
+                                onChange={(e) => setUsername(e.target.value)}
+                                style={{
+                                    width: '100%',
+                                    padding: '14px 14px 14px 45px',
+                                    borderRadius: '12px',
+                                    border: '1px solid var(--glass-border)',
+                                    background: 'rgba(0,0,0,0.2)',
+                                    color: 'white',
+                                    fontSize: '1rem',
+                                    outline: 'none'
+                                }}
+                            />
+                        </div>
+                    </div>
+
+                    <div className="input-group">
+                        <div style={{ position: 'relative' }}>
+                            <Lock size={18} style={{ position: 'absolute', left: '15px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
+                            <input
+                                type="password"
+                                placeholder="Contraseña habitual"
+                                value={password}
+                                onChange={(e) => setPassword(e.target.value)}
+                                style={{
+                                    width: '100%',
+                                    padding: '14px 14px 14px 45px',
+                                    borderRadius: '12px',
+                                    border: '1px solid var(--glass-border)',
+                                    background: 'rgba(0,0,0,0.2)',
+                                    color: 'white',
+                                    fontSize: '1rem',
+                                    outline: 'none'
+                                }}
+                            />
+                        </div>
+                    </div>
 
                     <button
                         type="submit"
                         disabled={isLoading}
-                        style={{
-                            padding: '12px',
-                            borderRadius: '8px',
-                            border: 'none',
-                            background: isLoading ? '#ccc' : '#faad14',
-                            color: 'white',
-                            fontSize: '1rem',
-                            fontWeight: 'bold',
-                            cursor: isLoading ? 'not-allowed' : 'pointer'
-                        }}
+                        className="btn-select primary"
+                        style={{ marginTop: '10px' }}
                     >
-                        {isLoading ? 'Verificando...' : 'Ingresar'}
+                        {isLoading ? 'Verificando...' : 'Entrar al Sistema'}
                     </button>
                 </form>
 
                 <button
                     onClick={onCancel}
-                    style={{ marginTop: '20px', background: 'none', border: 'none', color: '#666', cursor: 'pointer', textDecoration: 'underline' }}
+                    style={{ marginTop: '25px', width: '100%', background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', textDecoration: 'underline', fontSize: '0.9rem' }}
                 >
                     Volver al inicio
                 </button>
