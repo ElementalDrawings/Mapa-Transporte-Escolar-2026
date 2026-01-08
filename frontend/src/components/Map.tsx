@@ -166,10 +166,12 @@ const Map = () => {
 
             <style>{`
                 /* Filtros CSS para el mapa */
-                .map-filter-dark img {
+                .map-filter-dark canvas,
+                .map-filter-dark .maplibregl-canvas {
                     filter: invert(100%) hue-rotate(180deg) brightness(95%) contrast(90%);
                 }
-                .map-filter-blue img {
+                .map-filter-blue canvas,
+                .map-filter-blue .maplibregl-canvas {
                     filter: hue-rotate(190deg) brightness(85%) saturate(140%) contrast(110%);
                 }
                 
