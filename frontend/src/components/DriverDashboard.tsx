@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Send, StopCircle, Truck, MapPin, Gauge } from 'lucide-react';
 
 const DriverDashboard = () => {
@@ -6,11 +6,32 @@ const DriverDashboard = () => {
     const [status, setStatus] = useState('Listo para iniciar');
     const [coords, setCoords] = useState<{ lat: number, lng: number, speed: number } | null>(null);
 
+    const wakeLock = useRef<any>(null);
+
+    const requestWakeLock = async () => {
+        try {
+            if ('wakeLock' in navigator) {
+                wakeLock.current = await (navigator as any).wakeLock.request('screen');
+                console.log('Pantalla mantenida encendida (WakeLock activo)');
+            }
+        } catch (err) {
+            console.warn('No se pudo activar WakeLock:', err);
+        }
+    };
+
+    const releaseWakeLock = async () => {
+        if (wakeLock.current) {
+            await wakeLock.current.release();
+            wakeLock.current = null;
+        }
+    };
+
     useEffect(() => {
         let watchId: number | null = null;
 
         if (isTracking) {
             setStatus('Buscando señal GPS...');
+            requestWakeLock(); // Mantener pantalla encendida
 
             if (!navigator.geolocation) {
                 setStatus('Error: GPS no soportado');
@@ -21,7 +42,7 @@ const DriverDashboard = () => {
                 async (position) => {
                     const { latitude, longitude, speed } = position.coords;
                     setCoords({ lat: latitude, lng: longitude, speed: speed || 0 });
-                    setStatus('Transmitiendo en vivo');
+                    setStatus('Transmitiendo en vivo 📡');
 
                     try {
                         await fetch('/location', {
@@ -36,7 +57,7 @@ const DriverDashboard = () => {
                         });
                     } catch (error) {
                         console.error('Error sending location:', error);
-                        setStatus('Error de conexión 🔴');
+                        setStatus('Sin Internet (Guardando...) 🔴');
                     }
                 },
                 (error) => {
@@ -44,14 +65,26 @@ const DriverDashboard = () => {
                 },
                 { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
             );
+
+            // Re-activar WakeLock si la app vuelve a ser visible
+            const handleVisibilityChange = () => {
+                if (document.visibilityState === 'visible' && isTracking) {
+                    requestWakeLock();
+                }
+            };
+            document.addEventListener('visibilitychange', handleVisibilityChange);
+
+            return () => {
+                if (watchId !== null) navigator.geolocation.clearWatch(watchId);
+                document.removeEventListener('visibilitychange', handleVisibilityChange);
+                releaseWakeLock();
+            };
+
         } else {
             if (watchId !== null) navigator.geolocation.clearWatch(watchId);
+            releaseWakeLock();
             setStatus('Ruta finalizada');
         }
-
-        return () => {
-            if (watchId !== null) navigator.geolocation.clearWatch(watchId);
-        };
     }, [isTracking]);
 
     return (
