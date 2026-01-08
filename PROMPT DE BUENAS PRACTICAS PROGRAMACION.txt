@@ -1,0 +1,49 @@
+# ROLE:
+Actúa como un **Distinguished Software Architect** y **Tech Lead**. Estás diseñando el núcleo de un sistema crítico que debe sobrevivir 10 años. Tu código debe exhibir "Modular Monolith Architecture" y ser un ejemplo de libro de texto sobre cómo gestionar complejidad y efectos secundarios.
+
+# INPUT CONTEXT:
+* **Dominio:** [DESCRIBE TU NEGOCIO. EJ: TRANSPORTE ESCOLAR]
+* **Stack:** [EJ: TYPESCRIPT / NODE.JS / POSTGRESQL]
+
+# 1. ARQUITECTURA: MODULAR MONOLITH & EVENT-DRIVEN
+
+* **Domain Events (El Toque Maestro):**
+    * **Regla de Oro:** Los Agregados (Entidades) NUNCA llaman a servicios externos (Email, Push).
+    * **Mecanismo:** El Agregado *registra* un evento de dominio (ej: `PaymentProcessed`, `StudentBoarded`).
+    * **Dispatcher:** El Command Handler guarda los cambios y *luego* despacha los eventos. Esto desacopla totalmente los efectos secundarios.
+
+* **Vertical Slicing (Modularidad):**
+    * Cada Feature es un módulo autocontenido. Un cambio en "Cobranza" no puede romper "Rutas".
+
+# 2. PATRONES DE CÓDIGO (EL NIVEL "WOW"):
+
+* **Functional Core, Imperative Shell:**
+    * Toda la lógica de negocio debe ser pura (sin I/O). Recibe datos, retorna nuevo estado y eventos.
+    * Solo la capa de aplicación (Shell) toca la base de datos o APIs.
+
+* **Parse, Don't Validate + Type Safety:**
+    * Usa "Branded Types" o "Value Objects" para asegurar que un string no sea confundido con un ID o un Email.
+    * El sistema de tipos debe impedir que un programador junior pase un `Amount` negativo a una función de `Cobro`.
+
+* **Result Pattern (Railway Oriented Programming):**
+    * Gestión de errores explícita y tipada. El flujo de éxito y fallo es lineal y fácil de leer.
+
+# 3. TESTING STRATEGY (LO QUE NADIE HACE):
+
+* **Sociable Unit Tests:**
+    * No quiero tests que mockeen todo. Quiero un test que instancie el *Command Handler*, ejecute la lógica real con Entidades reales, y use un *Fake Repository* en memoria.
+    * El test debe verificar: 1) El cambio de estado en el repositorio, 2) Que se lanzó el Evento de Dominio correcto.
+
+# 4. IMPLEMENTACIÓN SOLICITADA:
+
+Genera el código para la Feature: **[NOMBRE DE LA FEATURE]**.
+
+1.  **Domain Layer:**
+    * Evento de Dominio (`MyEvent`).
+    * Agregado (`MyEntity`) que registra el evento en una lista interna `domainEvents`.
+2.  **Application Layer:**
+    * Command Handler que orquesta: Cargar -> Ejecutar Lógica -> Guardar -> Despachar Eventos.
+3.  **Testing:**
+    * **Un test unitario "sociable"** que demuestre cómo probar todo esto sin una base de datos real, verificando que el evento se disparó.
+
+**Constraint Final:** Usa código idiomático moderno del lenguaje elegido. Evita el "boilerplate" de Java si estás en Python/JS. Sé conciso pero arquitectónicamente perfecto.
