@@ -62,7 +62,7 @@ function App() {
       {role === 'parent' ? (
         <>
           <Map />
-          <div className="overlay-ui glass-card fade-in">
+          <div className="overlay-ui map-card-yellow fade-in">
             <div className="overlay-header">
               <h3>Transporte Escolar</h3>
               <div className="status-badge">

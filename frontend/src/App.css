@@ -170,6 +170,31 @@
   animation: pulse 2s infinite;
 }
 
+/* Tarjetas específicas para el mapa (Fondo Claro) */
+.map-card-yellow {
+  background: var(--primary);
+  border: 2px solid white;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+  border-radius: 12px;
+  color: #1a1a1a;
+  /* Texto oscuro para contraste */
+}
+
+/* Ajustes para textos dentro de la tarjeta amarilla */
+.map-card-yellow h3,
+.map-card-yellow h4,
+.map-card-yellow p,
+.map-card-yellow button {
+  color: #1a1a1a;
+}
+
+.map-card-yellow .btn-back {
+  background: rgba(255, 255, 255, 0.3);
+  color: #1a1a1a;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  font-weight: 600;
+}
+
 @keyframes pulse {
   0% {
     opacity: 1;

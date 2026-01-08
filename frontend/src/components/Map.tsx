@@ -77,7 +77,7 @@ const Map = () => {
         <div className="map-wrap" style={{ position: 'relative', width: '100%', height: '100%' }}>
             <div ref={mapContainer} className="map" style={{ width: '100%', height: '100%' }} />
 
-            <div className="map-overlay-bottom glass-card fade-in" style={{
+            <div className="map-overlay-bottom map-card-yellow fade-in" style={{
                 position: 'absolute',
                 bottom: '30px',
                 left: '50%',
@@ -90,20 +90,20 @@ const Map = () => {
                 gap: '20px',
                 zIndex: 1000
             }}>
-                <div className="map-icon-circle" style={{ background: 'var(--primary)', color: 'black', padding: '10px', borderRadius: '12px' }}>
+                <div className="map-icon-circle" style={{ background: 'white', color: 'black', padding: '10px', borderRadius: '12px' }}>
                     <MapIcon size={24} />
                 </div>
                 <div style={{ flex: 1 }}>
                     <h4 style={{ fontSize: '1rem', fontWeight: 600 }}>Furgón NB-2026</h4>
-                    <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Labranza, Temuco</p>
+                    <p style={{ fontSize: '0.8rem', opacity: 0.8 }}>Labranza, Temuco</p>
                 </div>
                 <div className="signal-indicator">
                     {status === 'online' ? (
-                        <div style={{ color: 'var(--success)', display: 'flex', alignItems: 'center', gap: '5px', fontSize: '0.8rem', fontWeight: 700 }}>
+                        <div style={{ color: '#006400', display: 'flex', alignItems: 'center', gap: '5px', fontSize: '0.8rem', fontWeight: 800 }}>
                             <Signal size={16} /> EN VIVO
                         </div>
                     ) : (
-                        <div style={{ color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '5px', fontSize: '0.8rem' }}>
+                        <div style={{ color: '#555', display: 'flex', alignItems: 'center', gap: '5px', fontSize: '0.8rem' }}>
                             <SignalLow size={16} /> {status === 'waiting' ? 'ESPERANDO' : 'SIN SEÑAL'}
                         </div>
                     )}
