@@ -33,7 +33,7 @@ const Login = ({ onLoginSuccess, onCancel }: LoginProps) => {
                 setError(data.message || 'Error de autenticación');
             }
         } catch (err) {
-            setError('Error conectando con el servidor');
+            setError('Error de conexión. El servidor de Render puede tardar 1 min en despertar.');
         } finally {
             setIsLoading(false);
         }

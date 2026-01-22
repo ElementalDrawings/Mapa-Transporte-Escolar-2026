@@ -7,14 +7,7 @@ fastify.register(require('@fastify/postgres'), {
 });
 
 fastify.register(require('@fastify/cors'), {
-  origin: (origin, cb) => {
-    // Permitir localhost o cualquier subdominio de vercel.app
-    if (!origin || /localhost/.test(origin) || /127\.0\.0\.1/.test(origin) || /\.vercel\.app$/.test(origin)) {
-      cb(null, true);
-      return;
-    }
-    cb(new Error("Not allowed by CORS"), false);
-  },
+  origin: true,
   methods: ["GET", "POST", "OPTIONS"],
   credentials: true
 });
@@ -39,25 +32,30 @@ fastify.get('/test-db', async (request, reply) => {
 
 fastify.post('/login', async (request, reply) => {
   const { username, password } = request.body;
+  console.log(`Intento de login para: ${username}`);
 
   // Validar contra DB
   const query = 'SELECT id, username, role, bus_id FROM users WHERE username = $1 AND password = $2';
 
-  const client = await fastify.pg.connect();
   try {
-    const { rows } = await client.query(query, [username, password]);
-    if (rows.length > 0) {
-      return { success: true, user: rows[0] };
-    } else {
-      reply.code(401);
-      return { success: false, message: 'Credenciales incorrectas' };
+    const client = await fastify.pg.connect();
+    try {
+      const { rows } = await client.query(query, [username, password]);
+      if (rows.length > 0) {
+        console.log(`✅ Login OK: ${username}`);
+        return { success: true, user: rows[0] };
+      } else {
+        console.log(`❌ Credenciales fallo: ${username}`);
+        reply.code(401);
+        return { success: false, message: 'Credenciales incorrectas' };
+      }
+    } finally {
+      client.release();
     }
   } catch (err) {
-    console.error(err);
+    console.error('🔥 ERROR LOGIN DB:', err.message);
     reply.code(500);
-    return { success: false, error: 'Error interno' };
-  } finally {
-    client.release();
+    return { success: false, error: 'Error de base de datos', detail: err.message };
   }
 });
 
