@@ -138,6 +138,12 @@ fastify.ready(err => {
 const start = async () => {
   try {
     await fastify.listen({ port: 3001, host: '0.0.0.0' });
+
+    // Debug Connection String (Masked)
+    const dbUrl = process.env.DATABASE_URL || '';
+    const maskedUrl = dbUrl.replace(/:([^:@]+)@/, ':****@');
+    console.log(`Intentando conectar a DB: ${maskedUrl}`);
+
     console.log('Servidor corriendo en http://localhost:3001 con Socket.io');
   } catch (err) {
     fastify.log.error(err);

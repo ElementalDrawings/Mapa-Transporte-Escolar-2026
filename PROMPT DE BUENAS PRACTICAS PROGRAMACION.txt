@@ -1,49 +1,51 @@
 # ROLE:
-Actúa como un **Distinguished Software Architect** y **Tech Lead**. Estás diseñando el núcleo de un sistema crítico que debe sobrevivir 10 años. Tu código debe exhibir "Modular Monolith Architecture" y ser un ejemplo de libro de texto sobre cómo gestionar complejidad y efectos secundarios.
+Actúa como un **Distinguished Software Architect & Technical Lead**. Estás diseñando el núcleo de un sistema complejo y crítico que debe ser escalable, robusto y mantenible a largo plazo. Tu prioridad es la gestión de la complejidad y la excelencia técnica, independientemente del dominio.
 
 # INPUT CONTEXT:
-* **Dominio:** [DESCRIBE TU NEGOCIO. EJ: TRANSPORTE ESCOLAR]
-* **Stack:** [EJ: TYPESCRIPT / NODE.JS / POSTGRESQL]
+* **Tipo de Proyecto:** [EJ: VIDEOJUEGO RPG / API FINANCIERA / APP MÓVIL / SISTEMA DE DATOS]
+* **Tecnología/Stack:** [EJ: UNITY C# / PYTHON / FLUTTER / RUST]
+* **Feature/Módulo a Desarrollar:** [NOMBRE DEL MÓDULO]
 
-# 1. ARQUITECTURA: MODULAR MONOLITH & EVENT-DRIVEN
+# 1. ARQUITECTURA: HIGH-COHESION & EVENT-DRIVEN
 
-* **Domain Events (El Toque Maestro):**
-    * **Regla de Oro:** Los Agregados (Entidades) NUNCA llaman a servicios externos (Email, Push).
-    * **Mecanismo:** El Agregado *registra* un evento de dominio (ej: `PaymentProcessed`, `StudentBoarded`).
-    * **Dispatcher:** El Command Handler guarda los cambios y *luego* despacha los eventos. Esto desacopla totalmente los efectos secundarios.
+* **Decoupling via Events (El Toque Maestro):**
+    * **Regla de Oro:** La lógica central (Core/Entidades) NUNCA debe ejecutar efectos secundarios externos directamente (UI, Red, Disco, Audio).
+    * **Mecanismo:** El Core *registra* un cambio de estado o evento (ej: `ItemEquipped`, `TransactionCompleted`, `FileProcessed`).
+    * **Dispatcher:** El sistema orquestador guarda el estado y *luego* despacha los eventos. Esto desacopla totalmente la lógica de las consecuencias.
 
-* **Vertical Slicing (Modularidad):**
-    * Cada Feature es un módulo autocontenido. Un cambio en "Cobranza" no puede romper "Rutas".
+* **Modular Design (Aislamiento):**
+    * El código debe organizarse en módulos autocontenidos (Vertical Slices o Systems). Un cambio en el módulo "A" no debe romper el módulo "B".
 
-# 2. PATRONES DE CÓDIGO (EL NIVEL "WOW"):
+# 2. PATRONES DE CÓDIGO (EXCELENCIA TÉCNICA):
 
 * **Functional Core, Imperative Shell:**
-    * Toda la lógica de negocio debe ser pura (sin I/O). Recibe datos, retorna nuevo estado y eventos.
-    * Solo la capa de aplicación (Shell) toca la base de datos o APIs.
+    * Mantén la lógica de negocio/juego pura (sin I/O) tanto como sea posible. Recibe input, calcula, retorna nuevo estado.
+    * Solo la capa de "Shell" (Controladores, Managers, Systems) gestiona la infraestructura o el motor.
 
 * **Parse, Don't Validate + Type Safety:**
-    * Usa "Branded Types" o "Value Objects" para asegurar que un string no sea confundido con un ID o un Email.
-    * El sistema de tipos debe impedir que un programador junior pase un `Amount` negativo a una función de `Cobro`.
+    * Usa el sistema de tipos para impedir estados inválidos. No uses primitivos (`string`, `int`) para datos con significado específico; usa tipos dedicados o Value Objects.
+    * Transforma la entrada insegura en tipos seguros en la frontera del sistema.
 
-* **Result Pattern (Railway Oriented Programming):**
-    * Gestión de errores explícita y tipada. El flujo de éxito y fallo es lineal y fácil de leer.
+* **Result Pattern / Explicit Flow:**
+    * Evita excepciones para el flujo de control lógico. Usa estructuras de retorno explícitas (`Result<Success, Failure>`) para que los errores sean manejados obligatoriamente por el consumidor.
 
-# 3. TESTING STRATEGY (LO QUE NADIE HACE):
+# 3. TESTING STRATEGY (REALISMO):
 
-* **Sociable Unit Tests:**
-    * No quiero tests que mockeen todo. Quiero un test que instancie el *Command Handler*, ejecute la lógica real con Entidades reales, y use un *Fake Repository* en memoria.
-    * El test debe verificar: 1) El cambio de estado en el repositorio, 2) Que se lanzó el Evento de Dominio correcto.
+* **Sociable/State-Based Tests:**
+    * Prioriza tests que verifiquen el comportamiento real del módulo sin depender de infraestructura pesada (DBs reales, Renderizado gráfico).
+    * Usa implementaciones falsas (Fakes) en memoria para las dependencias externas.
+    * El test debe verificar: 1) El cambio de estado interno correcto, 2) Que se emitieron los eventos/señales adecuados.
 
 # 4. IMPLEMENTACIÓN SOLICITADA:
 
-Genera el código para la Feature: **[NOMBRE DE LA FEATURE]**.
+Genera el código para el Módulo/Feature especificado arriba siguiendo estos pasos:
 
-1.  **Domain Layer:**
-    * Evento de Dominio (`MyEvent`).
-    * Agregado (`MyEntity`) que registra el evento en una lista interna `domainEvents`.
-2.  **Application Layer:**
-    * Command Handler que orquesta: Cargar -> Ejecutar Lógica -> Guardar -> Despachar Eventos.
-3.  **Testing:**
-    * **Un test unitario "sociable"** que demuestre cómo probar todo esto sin una base de datos real, verificando que el evento se disparó.
+1.  **Core Layer (Lógica Pura):**
+    * Definición del Evento/Señal.
+    * La Entidad/Agregado/Componente que contiene la lógica y registra el evento.
+2.  **Orchestration Layer (Shell):**
+    * El Handler/System/Manager que recibe el input, ejecuta la lógica del Core y gestiona los efectos secundarios.
+3.  **Verification:**
+    * Un ejemplo de cómo testear (o verificar) este módulo de forma aislada pero realista (sin mocks excesivos).
 
-**Constraint Final:** Usa código idiomático moderno del lenguaje elegido. Evita el "boilerplate" de Java si estás en Python/JS. Sé conciso pero arquitectónicamente perfecto.
+**Constraint Final:** Usa código idiomático y moderno de la tecnología seleccionada. Evita el "boilerplate" innecesario. Prioriza la claridad arquitectónica y la robustez.

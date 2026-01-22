@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="es"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Seguimiento Mapa Tía Paty</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: "#FFB800", // Hyundai H1 Yellow
+                        "surface-glass": "rgba(255, 255, 255, 0.60)",
+                        "surface-glass-hover": "rgba(255, 255, 255, 0.80)",
+                    },
+                    fontFamily: {
+                        sans: ["Inter", "sans-serif"],
+                    },
+                    borderRadius: {
+                        '3xl': '24px',
+                        '4xl': '32px',
+                    },
+                },
+            },
+        };
+    </script>
+<style>
+        body {
+            background-color: #FFB800;
+            background-image: radial-gradient(circle at 100% 0%, rgba(255,255,255,0.2) 0%, transparent 20%), 
+                              radial-gradient(circle at 0% 100%, rgba(255,255,255,0.2) 0%, transparent 20%);
+        }.map-container {
+            background-color: #0f172a;
+            background-image: 
+                linear-gradient(rgba(51, 65, 85, 0.3) 1px, transparent 1px), 
+                linear-gradient(90deg, rgba(51, 65, 85, 0.3) 1px, transparent 1px);
+            background-size: 40px 40px;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="min-h-screen flex flex-col items-center justify-between p-6 text-slate-900 relative font-sans">
+<header class="w-full max-w-sm text-center mb-2 z-10 pt-4">
+<h1 class="text-xs font-extrabold uppercase tracking-[0.2em] opacity-60">
+            Transporte Tía Paty
+        </h1>
+</header>
+<main class="w-full max-w-sm flex-1 flex flex-col gap-6 z-10">
+<div class="w-full aspect-square rounded-4xl shadow-2xl overflow-hidden relative border-4 border-black/5 map-container group">
+<div class="absolute inset-0 opacity-40 pointer-events-none">
+<svg class="w-full h-full" fill="none" stroke="#334155" stroke-linecap="round" stroke-linejoin="round" stroke-width="12" viewBox="0 0 400 400">
+<path d="M-20 120 Q 150 120, 200 250 T 420 380"></path>
+<path d="M250 -20 L 250 420" stroke="#1e293b" stroke-width="16"></path>
+<path d="M50 420 L 200 250"></path>
+<path d="M250 100 L 420 100"></path>
+</svg>
+</div>
+<div class="absolute inset-0 pointer-events-none">
+<svg class="w-full h-full" fill="none" viewBox="0 0 400 400">
+<path class="opacity-60" d="M-20 120 Q 150 120, 200 250" stroke="#FFB800" stroke-dasharray="8 8" stroke-linecap="round" stroke-width="6"></path>
+</svg>
+<div class="absolute top-[242px] left-[192px] transform -translate-x-1/2 -translate-y-1/2 flex items-center justify-center">
+<div class="w-16 h-16 bg-primary/20 rounded-full animate-ping absolute"></div>
+<div class="w-4 h-4 bg-primary rounded-full shadow-[0_0_20px_rgba(255,184,0,0.8)] relative z-10 border-2 border-white"></div>
+</div>
+<div class="absolute top-[210px] left-[220px] bg-slate-800 text-white text-[10px] font-bold px-2 py-1 rounded shadow-lg border border-slate-700">
+                    Av. Principal
+                </div>
+</div>
+<div class="absolute top-4 left-4 right-4 flex justify-between items-start">
+<div class="bg-black/40 backdrop-blur-md text-white px-3 py-1.5 rounded-full text-[10px] font-bold tracking-wider flex items-center gap-1 border border-white/10">
+<span class="block w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
+                    EN RUTA
+                </div>
+<div class="bg-black/40 backdrop-blur-md text-white p-2 rounded-full border border-white/10">
+<span class="material-symbols-outlined text-sm">layers</span>
+</div>
+</div>
+</div>
+<div class="flex items-center gap-3">
+<button class="h-14 w-14 flex-shrink-0 bg-white rounded-full flex items-center justify-center shadow-lg hover:scale-105 active:scale-95 transition-all border border-slate-100 text-slate-900">
+<span class="material-symbols-outlined">refresh</span>
+</button>
+<div class="flex-1 h-14 bg-white/30 backdrop-blur-md rounded-full p-1.5 flex justify-between items-center shadow-sm border border-white/20">
+<button class="flex-1 h-full rounded-full bg-white shadow-sm text-xs font-bold text-slate-900 transition-all">Claro</button>
+<button class="flex-1 h-full rounded-full text-xs font-bold text-slate-900/60 hover:bg-white/40 hover:text-slate-900 transition-all">Oscuro</button>
+<button class="flex-1 h-full rounded-full text-xs font-bold text-slate-900/60 hover:bg-white/40 hover:text-slate-900 transition-all">Azul</button>
+</div>
+</div>
+<div class="w-full bg-black text-white rounded-4xl p-7 shadow-2xl relative overflow-hidden flex flex-col justify-center">
+<div class="absolute -bottom-4 -right-4 opacity-10 transform rotate-12 pointer-events-none">
+<span class="material-symbols-outlined text-[140px]">airport_shuttle</span>
+</div>
+<div class="relative z-10 space-y-3">
+<div class="flex items-center justify-between">
+<h2 class="text-2xl font-bold tracking-tight text-white">Furgón NB-2026</h2>
+<div class="bg-yellow-500 text-black rounded-lg p-1.5 flex items-center justify-center shadow-lg shadow-yellow-500/20">
+<span class="material-symbols-outlined">directions_bus</span>
+</div>
+</div>
+<div class="flex items-center gap-2.5">
+<div class="w-8 h-8 rounded-full bg-gray-800 flex items-center justify-center">
+<span class="material-symbols-outlined text-sm text-gray-400">signal_wifi_off</span>
+</div>
+<div>
+<p class="text-sm font-semibold text-gray-300">Buscando Dirección</p>
+<p class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Offline Mode</p>
+</div>
+</div>
+</div>
+</div>
+</main>
+<footer class="w-full max-w-sm pb-4 pt-2 z-10">
+<button class="w-full bg-white border-2 border-black py-4 rounded-2xl text-black font-black tracking-[0.2em] text-sm hover:bg-gray-50 active:scale-[0.98] transition-all shadow-xl">
+            SALIR
+        </button>
+</footer>
+
+</body></html>
