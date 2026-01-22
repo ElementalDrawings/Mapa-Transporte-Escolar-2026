@@ -7,12 +7,15 @@ fastify.register(require('@fastify/postgres'), {
 });
 
 fastify.register(require('@fastify/cors'), {
-  origin: [
-    "http://localhost:5173",
-    "http://127.0.0.1:5173",
-    "https://transporte-escolar-2026.vercel.app"
-  ],
-  methods: ["GET", "POST"],
+  origin: (origin, cb) => {
+    // Permitir localhost o cualquier subdominio de vercel.app
+    if (!origin || /localhost/.test(origin) || /127\.0\.0\.1/.test(origin) || /\.vercel\.app$/.test(origin)) {
+      cb(null, true);
+      return;
+    }
+    cb(new Error("Not allowed by CORS"), false);
+  },
+  methods: ["GET", "POST", "OPTIONS"],
   credentials: true
 });
 
