@@ -54,6 +54,7 @@ const Login = ({ onLoginSuccess, onCancel }: LoginProps) => {
                         <Lock size={32} />
                     </div>
                     <h2 style={{ fontSize: '1.8rem', fontWeight: 600 }}>Acceso Conductor</h2>
+                    <p style={{ color: 'var(--text-muted)', fontSize: '0.8rem' }}>Versión del Sistema: <span style={{ color: 'var(--primary)' }}>v2.0 - LIVE</span></p>
                     <p style={{ color: 'var(--text-muted)', marginTop: '5px' }}>Ingresa tus credenciales para continuar</p>
                 </div>
 
