@@ -32,8 +32,13 @@ const Login = ({ onLoginSuccess, onCancel }: LoginProps) => {
             } else {
                 setError(data.message || 'Error de autenticación');
             }
-        } catch (err) {
-            setError('Error de conexión. El servidor de Render puede tardar 1 min en despertar.');
+        } catch (err: any) {
+            console.error('Login error:', err);
+            if (err.name === 'TypeError' && err.message === 'Failed to fetch') {
+                setError('Error de Red: No se puede alcanzar el servidor. ¿Está Render encendido?');
+            } else {
+                setError(`Error de conexión: ${err.message || 'Desconocido'}`);
+            }
         } finally {
             setIsLoading(false);
         }
