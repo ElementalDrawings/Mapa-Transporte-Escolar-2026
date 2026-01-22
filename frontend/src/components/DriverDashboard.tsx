@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { Send, StopCircle, Truck, MapPin, Gauge } from 'lucide-react';
+import { API_URL } from '../config';
 
 const DriverDashboard = () => {
     const [isTracking, setIsTracking] = useState(false);
@@ -45,7 +46,7 @@ const DriverDashboard = () => {
                     setStatus('Transmitiendo en vivo 📡');
 
                     try {
-                        await fetch('/location', {
+                        await fetch(`${API_URL}/location`, {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify({

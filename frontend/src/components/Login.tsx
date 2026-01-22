@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Lock, User, ShieldAlert } from 'lucide-react';
+import { API_URL } from '../config';
 
 interface LoginProps {
     onLoginSuccess: () => void;
@@ -18,7 +19,7 @@ const Login = ({ onLoginSuccess, onCancel }: LoginProps) => {
         setError('');
 
         try {
-            const response = await fetch('/login', {
+            const response = await fetch(`${API_URL}/login`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ username, password })

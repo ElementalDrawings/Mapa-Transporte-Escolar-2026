@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import maplibregl from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import { Signal, SignalLow, Map as MapIcon, RotateCw } from 'lucide-react';
+import { API_URL } from '../config';
 
 type MapFilter = 'normal' | 'dark' | 'blue';
 
@@ -88,7 +89,7 @@ const Map = () => {
     useEffect(() => {
         const fetchLocation = async () => {
             try {
-                const response = await fetch('/location/NB-2026');
+                const response = await fetch(`${API_URL}/location/NB-2026`);
                 const data = await response.json();
 
                 if (data.lat && data.lng) {
