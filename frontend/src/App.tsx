@@ -42,7 +42,27 @@ function App() {
         </div>
 
         <footer className="selection-footer">
-          <p>Cloud Edition v1.5 • © 2026</p>
+          <p>Cloud Edition v2.0 • © 2026</p>
+          <button
+            onClick={() => {
+              if (confirm('¿Limpiar caché y actualizar aplicación?')) {
+                navigator.serviceWorker.getRegistrations().then(regs => regs.forEach(r => r.unregister()));
+                caches.keys().then(keys => keys.forEach(k => caches.delete(k)));
+                window.location.reload();
+              }
+            }}
+            style={{
+              background: 'none',
+              border: 'none',
+              color: 'var(--text-muted)',
+              fontSize: '0.7rem',
+              marginTop: '10px',
+              cursor: 'pointer',
+              textDecoration: 'underline'
+            }}
+          >
+            Limpiar y Actualizar App
+          </button>
         </footer>
       </div>
     );
