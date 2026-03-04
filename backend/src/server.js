@@ -239,12 +239,12 @@ fastify.get('/active-passengers/:busId', async (request, reply) => {
   const client = await fastify.pg.connect();
   try {
     const query = `
+      SELECT p.name 
+      FROM passengers p
+      JOIN passenger_groups g ON p.group_id = g.id
+      WHERE g.bus_id = $1 AND g.is_active = TRUE AND p.is_on_board = TRUE
+    `;
     const { rows } = await client.query(query, [busId]);
-    return rows.map(r => r.name);
-  } finally {
-    client.release();
-  }
-});
     return rows.map(r => r.name);
   } finally {
     client.release();
@@ -262,7 +262,7 @@ fastify.ready(err => {
   if (err) throw err;
   // Socket logic kept minimal for reference or future use
   fastify.io.on('connection', (socket) => {
-    fastify.log.info(`Socket connected: ${ socket.id }`);
+    fastify.log.info(`Socket connected: ${socket.id}`);
   });
 });
 
@@ -273,7 +273,7 @@ const start = async () => {
     // Debug Connection String (Masked)
     const dbUrl = process.env.DATABASE_URL || '';
     const maskedUrl = dbUrl.replace(/:([^:@]+)@/, ':****@');
-    console.log(`Intentando conectar a DB: ${ maskedUrl } `);
+    console.log(`Intentando conectar a DB: ${maskedUrl} `);
 
     console.log('Servidor corriendo en http://localhost:3001 con Socket.io');
   } catch (err) {

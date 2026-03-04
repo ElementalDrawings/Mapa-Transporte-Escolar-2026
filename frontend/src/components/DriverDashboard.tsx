@@ -121,7 +121,13 @@ const DriverDashboard = ({ onNavigateToPassengers }: DashboardProps) => {
                     setLocationQueue(prev => [...prev.slice(-100), locEntry]); // Mantener máx 100 puntos (aprox 3 min)
 
                     // Intentar subir inmediatamente
-                    uploadQueue();
+                    if (navigator.onLine) {
+                        fetch(`${API_URL}/location`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify([locEntry])
+                        }).catch(err => console.error('Error uploading direct loc:', err));
+                    }
                 },
                 (error) => setStatus(`Error: ${error.message}`),
                 { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
