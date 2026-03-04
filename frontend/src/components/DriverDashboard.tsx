@@ -12,6 +12,8 @@ const DriverDashboard = ({ onNavigateToPassengers }: DashboardProps) => {
     const [isOnline, setIsOnline] = useState(navigator.onLine);
     const [isVisible, setIsVisible] = useState(true);
     const [isEnergySave, setIsEnergySave] = useState(false);
+    const [lastPostStatus, setLastPostStatus] = useState<string>('');
+    const [debugInfo, setDebugInfo] = useState(false);
 
     // Cola de ubicaciones (RÁFAGA)
     const [locationQueue, setLocationQueue] = useState<any[]>(() => {
@@ -122,11 +124,18 @@ const DriverDashboard = ({ onNavigateToPassengers }: DashboardProps) => {
 
                     // Intentar subir inmediatamente
                     if (navigator.onLine) {
-                        fetch(`${API_URL}/location`, {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify([locEntry])
-                        }).catch(err => console.error('Error uploading direct loc:', err));
+                        try {
+                            const res = await fetch(`${API_URL}/location`, {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify([locEntry])
+                            });
+                            setLastPostStatus(res.ok ? '✅ OK' : `❌ ${res.status}`);
+                        } catch (err: any) {
+                            setLastPostStatus(`🔥 ${err.message}`);
+                        }
+                    } else {
+                        setLastPostStatus('🔌 Offline');
                     }
                 },
                 (error) => setStatus(`Error: ${error.message}`),
@@ -177,6 +186,21 @@ const DriverDashboard = ({ onNavigateToPassengers }: DashboardProps) => {
                     <h1 className="text-4xl font-black tracking-tighter text-slate-900 leading-none">
                         PANEL DE<br />CONTROL
                     </h1>
+
+                    {/* Debug Toggle */}
+                    <button onClick={() => setDebugInfo(!debugInfo)} className="mt-2 text-[8px] opacity-20 uppercase tracking-widest font-bold">
+                        {debugInfo ? 'Ocultar Debug' : 'Mostrar Debug'}
+                    </button>
+
+                    {debugInfo && (
+                        <div className="mt-2 p-2 bg-black text-white text-[8px] font-mono rounded-lg text-left overflow-auto max-h-32 w-full">
+                            <p>API: {API_URL}</p>
+                            <p>Lat: {coords?.lat}</p>
+                            <p>Lng: {coords?.lng}</p>
+                            <p>Status: {lastPostStatus}</p>
+                            <p>Queue: {locationQueue.length}</p>
+                        </div>
+                    )}
                 </header>
 
                 {/* Status Card */}
