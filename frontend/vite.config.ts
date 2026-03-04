@@ -11,9 +11,12 @@ export default defineConfig({
     VitePWA({
       registerType: 'autoUpdate',
       manifest: {
-        name: 'Transporte Escolar 2026',
-        short_name: 'Transporte',
-        theme_color: '#ffffff',
+        name: 'Transporte Tía Paty 2026',
+        short_name: 'Tía Paty',
+        theme_color: '#FFB800',
+        background_color: '#FFB800',
+        display: 'standalone',
+        orientation: 'portrait',
         icons: [
           {
             src: 'pwa-192x192.png',

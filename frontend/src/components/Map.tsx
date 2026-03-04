@@ -1,310 +1,240 @@
 import { useEffect, useRef, useState } from 'react';
 import maplibregl from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
-import { Signal, SignalLow, Map as MapIcon, RotateCw } from 'lucide-react';
 import { API_URL } from '../config';
 
-type MapFilter = 'normal' | 'dark' | 'blue';
+interface MapProps {
+    onViewPassengers: () => void;
+    onBack: () => void;
+}
 
-const Map = () => {
+const Map = ({ onViewPassengers, onBack }: MapProps) => {
     const mapContainer = useRef<HTMLDivElement>(null);
     const map = useRef<maplibregl.Map | null>(null);
-    const busMarker = useRef<maplibregl.Marker | null>(null);
-    const hasCentered = useRef(false);
-    const [status, setStatus] = useState<'online' | 'offline' | 'waiting'>('waiting');
-    const [address, setAddress] = useState<string>('Buscando dirección...');
+    const marker = useRef<maplibregl.Marker | null>(null);
+    const [_busLocation, setBusLocation] = useState<{ lat: number; lng: number, speed?: number } | null>(null);
+    const [address, setAddress] = useState<string>('Buscando ubicación...');
+    const [lastUpdate, setLastUpdate] = useState<Date | null>(null);
+    const [mapStyle, setMapStyle] = useState('https://tiles.basemaps.cartocdn.com/gl/positron-gl-style/style.json');
+    const [isAutoCentering, setIsAutoCentering] = useState(true);
 
-    // Filtro de mapa con persistencia
-    const [filter, setFilter] = useState<MapFilter>(() => {
-        return (localStorage.getItem('map-filter') as MapFilter) || 'normal';
-    });
-
+    // Initialize Map
     useEffect(() => {
         if (map.current) return;
         if (!mapContainer.current) return;
 
-        // Recuperar última vista guardada o usar defecto
-        const savedCenter = localStorage.getItem('map-center');
-        const savedZoom = localStorage.getItem('map-zoom');
-
-        const initialCenter: [number, number] = savedCenter ? JSON.parse(savedCenter) : [-72.7502, -38.7639];
-        const initialZoom: number = savedZoom ? parseFloat(savedZoom) : 15;
-
         map.current = new maplibregl.Map({
             container: mapContainer.current,
-            style: {
-                version: 8,
-                sources: {
-                    'osm-tiles': {
-                        type: 'raster',
-                        tiles: ['https://tile.openstreetmap.org/{z}/{x}/{y}.png'],
-                        tileSize: 256,
-                        attribution: '&copy; OpenStreetMap'
-                    }
-                },
-                layers: [{ id: 'osm-tiles', type: 'raster', source: 'osm-tiles' }]
-            },
-            center: initialCenter,
-            zoom: initialZoom
+            style: mapStyle,
+            center: [-72.5904, -38.7362], // Temuco
+            zoom: 13,
+            attributionControl: false
         });
 
-        // Guardar posición al moverse
-        map.current.on('moveend', () => {
-            if (map.current) {
-                const center = map.current.getCenter();
-                localStorage.setItem('map-center', JSON.stringify([center.lng, center.lat]));
-                localStorage.setItem('map-zoom', map.current.getZoom().toString());
-            }
-        });
+        map.current.addControl(new maplibregl.NavigationControl(), 'top-right');
 
-        map.current.addControl(new maplibregl.NavigationControl(), 'bottom-right');
+        // Desactivar centrado si el usuario mueve el mapa manualmente
+        map.current.on('dragstart', () => {
+            setIsAutoCentering(false);
+        });
     }, []);
 
-    // Función para obtener nombre de la calle (Reverse Geocoding)
-    const getStreetName = async (lat: number, lng: number) => {
+    // Update Map Style
+    useEffect(() => {
+        if (map.current) {
+            map.current.setStyle(mapStyle);
+        }
+    }, [mapStyle]);
+
+    // Fetch Location
+    const fetchLocation = async () => {
         try {
-            const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`, {
-                headers: {
-                    'User-Agent': 'TransporteEscolarApp/1.0'
-                }
-            });
+            const response = await fetch(`${API_URL}/location/NB-2026`);
             const data = await response.json();
-            if (data.address) {
-                // Priorizar nombre de calle -> ruta -> barrio
-                const street = data.address.road || data.address.pedestrian || data.address.suburb || 'Ubicación en mapa';
-                const city = data.address.city || data.address.town || data.address.village || '';
 
-                // Formatear dirección
-                let formattedAddress = street;
-                if (city) formattedAddress += `, ${city}`;
+            // Si el conductor tiene oculta la ubicación
+            if (data.status === 'hidden') {
+                setAddress('Ubicación oculta por el conductor');
+                return;
+            }
 
-                setAddress(formattedAddress);
+            if (data.lat && data.lng) {
+                const newLocation = { lat: parseFloat(data.lat), lng: parseFloat(data.lng), speed: data.speed };
+                setBusLocation(newLocation);
+                setLastUpdate(new Date());
+
+                // Reverse Geocoding (Nominatim) - CALLE + NÚMERO
+                fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${newLocation.lat}&lon=${newLocation.lng}`)
+                    .then(res => res.json())
+                    .then(geo => {
+                        const addr = geo.address;
+                        const street = addr.road || addr.pedestrian || addr.suburb || 'Calle desconocida';
+                        const number = addr.house_number ? `, ${addr.house_number}` : '';
+                        setAddress(`${street}${number}`);
+                    })
+                    .catch(() => setAddress('Dirección no disponible'));
+
+                // Update Marker
+                if (map.current) {
+                    if (!marker.current) {
+                        const el = document.createElement('div');
+                        el.className = 'bus-marker';
+                        el.style.width = '40px';
+                        el.style.height = '40px';
+                        el.style.backgroundImage = 'url(https://cdn-icons-png.flaticon.com/512/3063/3063823.png)'; // Bus Icon
+                        el.style.backgroundSize = 'cover';
+
+                        marker.current = new maplibregl.Marker({ element: el })
+                            .setLngLat([newLocation.lng, newLocation.lat])
+                            .addTo(map.current);
+                    } else {
+                        marker.current.setLngLat([newLocation.lng, newLocation.lat]);
+                    }
+
+                    if (isAutoCentering) {
+                        map.current.easeTo({
+                            center: [newLocation.lng, newLocation.lat],
+                            duration: 2000,
+                            easing: (t) => t // Linear
+                        });
+                    }
+                }
             }
         } catch (error) {
-            console.warn('Error obteniendo dirección:', error);
-            // No cambiamos el estado para dejar el último conocido o el mensaje por defecto
+            console.error('Error fetching location:', error);
         }
     };
 
+    // Polling
     useEffect(() => {
-        const fetchLocation = async () => {
-            try {
-                const response = await fetch(`${API_URL}/location/NB-2026`);
-                const data = await response.json();
-
-                if (data.lat && data.lng) {
-                    setStatus('online');
-                    if (!map.current) return;
-
-                    // Actualizar dirección 
-                    // Nota: En producción real deberíamos usar debounce para no saturar la API
-                    // Aquí confiamos en el intervalo de 3s
-                    getStreetName(data.lat, data.lng);
-
-                    if (!busMarker.current) {
-                        const el = document.createElement('div');
-                        el.className = 'bus-marker-premium';
-                        el.innerHTML = `
-                            <div class="bus-icon-container">
-                                <div class="bus-pulse"></div>
-                                <div class="bus-body">🚐</div>
-                            </div>
-                        `;
-
-                        busMarker.current = new maplibregl.Marker({ element: el })
-                            .setLngLat([data.lng, data.lat])
-                            .addTo(map.current);
-                    } else {
-                        busMarker.current.setLngLat([data.lng, data.lat]);
-                    }
-
-                    // Auto-centrado inicial (solo si NO hay una posición guardada explícita reciente, o podemos omitirlo si preferimos persistencia total)
-                    // En este caso, priorizamos la persistencia del usuario si ya movió el mapa.
-                    // Pero si es la primera carga absoluta, centramos.
-                    if (!hasCentered.current && !localStorage.getItem('map-center')) {
-                        map.current.flyTo({
-                            center: [data.lng, data.lat],
-                            zoom: 16,
-                            speed: 1.2
-                        });
-                        hasCentered.current = true;
-                    }
-                } else {
-                    setStatus('waiting');
-                    setAddress('Esperando señal...');
-                }
-            } catch (error) {
-                setStatus('offline');
-            }
-        };
-
-        const intervalId = setInterval(fetchLocation, 3000);
-        fetchLocation(); // Initial call
-        return () => clearInterval(intervalId);
-    }, []);
-
-    const changeFilter = (newFilter: MapFilter) => {
-        setFilter(newFilter);
-        localStorage.setItem('map-filter', newFilter);
-    };
-
-    const handleRefresh = () => {
-        window.location.reload();
-    };
+        fetchLocation(); // Initial fetch
+        const interval = setInterval(fetchLocation, 2000);
+        return () => clearInterval(interval);
+    }, [isAutoCentering]);
 
     return (
-        <div className="map-wrap" style={{ position: 'relative', width: '100%', height: '100%' }}>
-            <div
-                ref={mapContainer}
-                className={`map map-filter-${filter}`}
-                style={{ width: '100%', height: '100%' }}
-            />
+        <div className="min-h-screen flex flex-col items-center justify-between p-6 text-slate-900 relative">
+            <header className="w-full max-w-sm text-center mb-2 z-10 pt-4">
+                <h1 className="text-xs font-extrabold uppercase tracking-[0.2em] opacity-60">
+                    Transporte Tía Paty
+                </h1>
+            </header>
 
-            {/* Selector de Filtros */}
-            <div className="map-filter-selector glass-card fade-in" style={{
-                position: 'absolute',
-                top: '20px',
-                right: '20px',
-                zIndex: 1000,
-                display: 'flex',
-                padding: '5px',
-                gap: '5px',
-                borderRadius: '12px'
-            }}>
-                <button
-                    onClick={() => changeFilter('normal')}
-                    className={`filter-btn ${filter === 'normal' ? 'active' : ''}`}
-                    title="Modo Normal"
-                >
-                    Claro
-                </button>
-                <button
-                    onClick={() => changeFilter('dark')}
-                    className={`filter-btn ${filter === 'dark' ? 'active' : ''}`}
-                    title="Modo Oscuro"
-                >
-                    Oscuro
-                </button>
-                <button
-                    onClick={() => changeFilter('blue')}
-                    className={`filter-btn ${filter === 'blue' ? 'active' : ''}`}
-                    title="Tono Azulado"
-                >
-                    Azul
-                </button>
-                <div style={{ width: '1px', background: 'var(--glass-border)', margin: '0 5px' }}></div>
-                <button
-                    onClick={handleRefresh}
-                    className="filter-btn"
-                    title="Refrescar Aplicación"
-                    style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-                >
-                    <RotateCw size={16} />
-                </button>
-            </div>
+            <main className="w-full max-w-sm flex-1 flex flex-col gap-6 z-10">
+                {/* Map Container */}
+                <div className="w-full aspect-square rounded-4xl shadow-2xl overflow-hidden relative border-4 border-black/5 group bg-slate-100">
+                    <div ref={mapContainer} className="w-full h-full" />
 
-            {/* Tarjeta de Información Inferior */}
-            <div className="map-overlay-bottom map-card-yellow fade-in" style={{
-                position: 'absolute',
-                bottom: '30px',
-                left: '50%',
-                transform: 'translateX(-50%)',
-                width: '90%',
-                maxWidth: '400px',
-                padding: '15px 25px',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '20px',
-                zIndex: 1000
-            }}>
-                <div className="map-icon-circle" style={{ background: '#1a1a1a', color: 'white', padding: '10px', borderRadius: '12px' }}>
-                    <MapIcon size={24} />
-                </div>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                    <h4 style={{ fontSize: '1rem', fontWeight: 600 }}>Furgón NB-2026</h4>
-                    <p style={{ fontSize: '0.8rem', opacity: 0.9, fontWeight: 500, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                        {address}
-                    </p>
-                </div>
-                <div className="signal-indicator">
-                    {status === 'online' ? (
-                        <div style={{ color: '#006400', display: 'flex', alignItems: 'center', gap: '5px', fontSize: '0.8rem', fontWeight: 800 }}>
-                            <Signal size={16} /> EN VIVO
+                    {/* Centering Indicator */}
+                    <button
+                        onClick={() => {
+                            setIsAutoCentering(true);
+                            fetchLocation(); // Forzar centrado inmediato
+                        }}
+                        className={`absolute bottom-4 right-4 w-10 h-10 rounded-full flex items-center justify-center shadow-lg transition-all ${isAutoCentering ? 'bg-yellow-400 text-black border-2 border-black' : 'bg-white text-slate-400 border border-slate-200'}`}
+                    >
+                        <span className="material-symbols-outlined text-lg">
+                            {isAutoCentering ? 'gps_fixed' : 'gps_not_fixed'}
+                        </span>
+                    </button>
+
+                    {/* Overlay Status */}
+                    <div className="absolute top-4 left-4 right-4 flex justify-between items-start pointer-events-none">
+                        <div className="bg-black/80 backdrop-blur-md text-white px-3 py-1.5 rounded-full text-[10px] font-bold tracking-wider flex items-center gap-1 border border-white/10 shadow-lg">
+                            <span className="block w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
+                            EN RUTA
                         </div>
-                    ) : (
-                        <div style={{ color: '#555', display: 'flex', alignItems: 'center', gap: '5px', fontSize: '0.8rem' }}>
-                            <SignalLow size={16} /> {status === 'waiting' ? '...' : 'OFFLINE'}
-                        </div>
-                    )}
+                    </div>
                 </div>
-            </div>
 
-            <style>{`
-                /* Filtros CSS para el mapa */
-                .map-filter-dark canvas,
-                .map-filter-dark .maplibregl-canvas {
-                    filter: invert(100%) hue-rotate(180deg) brightness(95%) contrast(90%);
-                }
-                .map-filter-blue canvas,
-                .map-filter-blue .maplibregl-canvas {
-                    filter: grayscale(100%) sepia(100%) hue-rotate(190deg) saturate(300%) brightness(80%) contrast(110%);
-                }
-                
-                /* Estilos para el selector de filtros */
-                .filter-btn {
-                    background: transparent;
-                    border: none;
-                    color: white;
-                    padding: 8px 15px;
-                    border-radius: 8px;
-                    font-size: 0.8rem;
-                    font-weight: 600;
-                    cursor: pointer;
-                    transition: all 0.2s;
-                }
-                .filter-btn.active {
-                    background: var(--primary);
-                    color: black;
-                }
-                .filter-btn:hover:not(.active) {
-                    background: rgba(255, 255, 255, 0.1);
-                }
+                {/* Filters */}
+                <div className="flex items-center gap-3">
+                    <button
+                        onClick={() => {
+                            setAddress('Actualizando...');
+                            fetchLocation();
+                        }}
+                        className="h-14 w-14 flex-shrink-0 bg-white rounded-full flex items-center justify-center shadow-lg hover:scale-105 active:scale-95 transition-all border border-slate-100 text-slate-900"
+                    >
+                        <span className="material-symbols-outlined">refresh</span>
+                    </button>
+                    <div className="flex-1 h-14 bg-white/30 backdrop-blur-md rounded-full p-1.5 flex justify-between items-center shadow-sm border border-white/20 relative">
+                        {/* Animated Background Pill */}
+                        <div
+                            className={`absolute top-1.5 bottom-1.5 w-[31%] bg-white rounded-full shadow-sm transition-all duration-300 ease-out ${mapStyle.includes('positron') ? 'left-1.5' :
+                                mapStyle.includes('dark-matter') ? 'left-1/2 -translate-x-1/2' :
+                                    'right-1.5'
+                                }`}
+                        />
 
-                .bus-marker-premium {
-                    cursor: pointer;
-                    z-index: 2;
-                }
-                .bus-icon-container {
-                    position: relative;
-                    width: 40px;
-                    height: 40px;
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    font-size: 24px;
-                    background: white;
-                    border-radius: 50%;
-                    border: 3px solid var(--primary);
-                    box-shadow: var(--shadow);
-                }
-                .bus-pulse {
-                    position: absolute;
-                    width: 100%;
-                    height: 100%;
-                    background: var(--primary);
-                    border-radius: 50%;
-                    opacity: 0.6;
-                    animation: markerPulse 2s infinite;
-                }
-                @keyframes markerPulse {
-                    0% { transform: scale(1); opacity: 0.6; }
-                    100% { transform: scale(2.5); opacity: 0; }
-                }
+                        <button
+                            onClick={() => setMapStyle('https://tiles.basemaps.cartocdn.com/gl/positron-gl-style/style.json')}
+                            className={`flex-1 h-full rounded-full text-xs font-bold transition-all relative z-10 ${mapStyle.includes('positron') ? 'text-slate-900' : 'text-slate-900/60 hover:text-slate-900'
+                                }`}
+                        >
+                            Claro
+                        </button>
+                        <button
+                            onClick={() => setMapStyle('https://tiles.basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json')}
+                            className={`flex-1 h-full rounded-full text-xs font-bold transition-all relative z-10 ${mapStyle.includes('dark-matter') ? 'text-slate-900' : 'text-slate-900/60 hover:text-slate-900'
+                                }`}
+                        >
+                            Oscuro
+                        </button>
+                        <button
+                            onClick={() => setMapStyle('https://tiles.basemaps.cartocdn.com/gl/voyager-gl-style/style.json')}
+                            className={`flex-1 h-full rounded-full text-xs font-bold transition-all relative z-10 ${mapStyle.includes('voyager') ? 'text-slate-900' : 'text-slate-900/60 hover:text-slate-900'
+                                }`}
+                        >
+                            Azul
+                        </button>
+                    </div>
+                </div>
 
-                .maplibregl-ctrl {
-                    filter: none !important;
-                }
-            `}</style>
+                {/* Info Card */}
+                <div className="w-full bg-black text-white rounded-4xl p-7 shadow-2xl relative overflow-hidden flex flex-col justify-center">
+                    <div className="absolute -bottom-4 -right-4 opacity-10 transform rotate-12 pointer-events-none">
+                        <span className="material-symbols-outlined text-[140px]">airport_shuttle</span>
+                    </div>
+                    <div className="relative z-10 space-y-3">
+                        <div className="flex items-center justify-between">
+                            <h2 className="text-2xl font-bold tracking-tight text-white">Furgón NB-2026</h2>
+                            <div className="bg-yellow-500 text-black rounded-lg p-1.5 flex items-center justify-center shadow-lg shadow-yellow-500/20">
+                                <span className="material-symbols-outlined">directions_bus</span>
+                            </div>
+                        </div>
+                        <div className="flex items-center gap-2.5">
+                            <div className="w-8 h-8 rounded-full bg-gray-800 flex items-center justify-center">
+                                <span className="material-symbols-outlined text-sm text-gray-400">location_on</span>
+                            </div>
+                            <div>
+                                <p className="text-sm font-semibold text-gray-300 truncate max-w-[200px]">{address}</p>
+                                <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest text-green-400">
+                                    {lastUpdate ? `Actualizado: ${lastUpdate.toLocaleTimeString()}` : 'Conectando...'}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {/* View Passengers Button (New) */}
+                <button
+                    onClick={onViewPassengers}
+                    className="w-full bg-yellow-400 border-2 border-yellow-500 py-4 rounded-2xl text-black font-black tracking-[0.05em] text-sm hover:bg-yellow-300 active:scale-[0.98] transition-all shadow-xl flex items-center justify-center gap-2"
+                >
+                    <span className="material-symbols-outlined">groups</span>
+                    VER PASAJEROS A BORDO
+                </button>
+            </main>
+
+            <footer className="w-full max-w-sm pb-4 pt-2 z-10">
+                <button
+                    onClick={onBack}
+                    className="w-full bg-white border-2 border-black py-4 rounded-2xl text-black font-black tracking-[0.2em] text-sm hover:bg-gray-50 active:scale-[0.98] transition-all shadow-xl"
+                >
+                    SALIR
+                </button>
+            </footer>
         </div>
     );
 };

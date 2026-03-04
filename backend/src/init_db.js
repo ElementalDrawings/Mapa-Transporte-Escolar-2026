@@ -49,20 +49,51 @@ async function initDB() {
             console.log('✅ Usuario conductor insertado');
         }
 
-        // Insertar un dato de prueba de ubicación si está vacía
-        const checkEmpty = await client.query('SELECT count(*) FROM bus_locations');
-        if (checkEmpty.rows[0].count === '0') {
-            const insertQuery = `
-            INSERT INTO bus_locations (bus_id, lat, lng, speed)
-            VALUES ('NB-2026', -38.7639, -72.7502, 0);
+        // Crear tabla de grupos de pasajeros
+        const createGroupsTable = `
+            CREATE TABLE IF NOT EXISTS passenger_groups (
+                id VARCHAR(50) PRIMARY KEY,
+                name VARCHAR(100) NOT NULL,
+                is_active BOOLEAN DEFAULT TRUE,
+                bus_id VARCHAR(50)
+            );
         `;
-            await client.query(insertQuery);
-            console.log('✅ Dato de prueba insertado');
-        }
+        await client.query(createGroupsTable);
+        console.log('✅ Tabla passenger_groups lista');
+
+        // Crear tabla de pasajeros
+        const createPassengersTable = `
+            CREATE TABLE IF NOT EXISTS passengers (
+                id SERIAL PRIMARY KEY,
+                group_id VARCHAR(50) REFERENCES passenger_groups(id) ON DELETE CASCADE,
+                name VARCHAR(100) NOT NULL,
+                is_on_board BOOLEAN DEFAULT FALSE
+            );
+
+            -- Intentamos añadir la columna si la tabla ya existía de antes
+            DO $$
+            BEGIN
+                BEGIN
+                    ALTER TABLE passengers ADD COLUMN is_on_board BOOLEAN DEFAULT FALSE;
+                EXCEPTION
+                    WHEN duplicate_column THEN null;
+                END;
+            END $$;
+        `;
+        await client.query(createPassengersTable);
+        console.log('✅ Tabla passengers lista (con is_on_board)');
+
+        // Inicializar grupo por defecto
+        await client.query(`
+            INSERT INTO passenger_groups (id, name, is_active, bus_id)
+            VALUES ('default', 'Recorrido General', TRUE, 'NB-2026')
+            ON CONFLICT (id) DO NOTHING;
+        `);
 
         await client.end();
     } catch (err) {
         console.error('❌ Error inicializando DB:', err);
+        if (client) await client.end().catch(() => { });
         process.exit(1);
     }
 }

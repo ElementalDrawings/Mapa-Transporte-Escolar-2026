@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { Lock, User, ShieldAlert } from 'lucide-react';
 import { API_URL } from '../config';
 
 interface LoginProps {
@@ -35,7 +34,7 @@ const Login = ({ onLoginSuccess, onCancel }: LoginProps) => {
         } catch (err: any) {
             console.error('Login error:', err);
             if (err.name === 'TypeError' && err.message === 'Failed to fetch') {
-                setError('Error de Red: No se puede alcanzar el servidor. ¿Está Render encendido?');
+                setError('Error de Red: No se puede alcanzar el servidor.');
             } else {
                 setError(`Error de conexión: ${err.message || 'Desconocido'}`);
             }
@@ -45,75 +44,60 @@ const Login = ({ onLoginSuccess, onCancel }: LoginProps) => {
     };
 
     return (
-        <div className="selection-screen fade-in">
-            <div className="bg-dots"></div>
-
-            <div className="login-card glass-card fade-in" style={{ width: '100%', maxWidth: '400px', padding: '40px' }}>
-                <div style={{ textAlign: 'center', marginBottom: '30px' }}>
-                    <div className="icon-wrapper" style={{ margin: '0 auto 20px auto' }}>
-                        <Lock size={32} />
+        <div className="min-h-screen flex flex-col items-center justify-center p-6 text-slate-900 relative">
+            <main className="w-full max-w-sm flex flex-col items-center z-10">
+                <div className="mb-8 animate-pop [animation-delay:0ms]">
+                    <div className="w-24 h-24 bg-black rounded-3xl flex items-center justify-center shadow-xl shadow-black/10">
+                        <span className="material-symbols-outlined text-4xl text-[#FFB800]">lock</span>
                     </div>
-                    <h2 style={{ fontSize: '1.8rem', fontWeight: 600 }}>Acceso Conductor</h2>
-                    <p style={{ color: 'var(--text-muted)', fontSize: '0.8rem' }}>Versión del Sistema: <span style={{ color: 'var(--primary)' }}>v2.0 - LIVE</span></p>
-                    <p style={{ color: 'var(--text-muted)', marginTop: '5px' }}>Ingresa tus credenciales para continuar</p>
+                </div>
+
+                <div className="text-center mb-10 animate-pop [animation-delay:100ms]">
+                    <h1 className="text-3xl font-extrabold tracking-tight text-black mb-2">
+                        Acceso Conductor
+                    </h1>
+                    <p className="text-sm font-medium text-black/60">
+                        Ingresa tus credenciales
+                    </p>
+                    <p className="text-xs font-bold text-black/40 mt-1">v2.0 - LIVE</p>
                 </div>
 
                 {error && (
-                    <div className="status-badge" style={{ background: 'rgba(255, 77, 79, 0.1)', color: 'var(--danger)', borderColor: 'rgba(255, 77, 79, 0.3)', marginBottom: '20px', width: '100%', justifyContent: 'center' }}>
-                        <ShieldAlert size={16} /> {error}
+                    <div className="w-full bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-2xl mb-6 text-sm font-bold text-center animate-wiggle">
+                        {error}
                     </div>
                 )}
 
-                <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-                    <div className="input-group">
-                        <div style={{ position: 'relative' }}>
-                            <User size={18} style={{ position: 'absolute', left: '15px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
-                            <input
-                                type="text"
-                                placeholder="Nombre de usuario"
-                                value={username}
-                                onChange={(e) => setUsername(e.target.value)}
-                                style={{
-                                    width: '100%',
-                                    padding: '14px 14px 14px 45px',
-                                    borderRadius: '12px',
-                                    border: '1px solid var(--glass-border)',
-                                    background: 'rgba(0,0,0,0.2)',
-                                    color: 'white',
-                                    fontSize: '1rem',
-                                    outline: 'none'
-                                }}
-                            />
+                <form onSubmit={handleSubmit} className="w-full space-y-4 mb-8 animate-slide-up [animation-delay:200ms]">
+                    <div className="relative group">
+                        <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                            <span className="material-symbols-outlined text-slate-500">person</span>
                         </div>
+                        <input
+                            className="w-full pl-12 pr-4 py-4 bg-white/40 border border-slate-800/20 rounded-2xl text-slate-900 placeholder-slate-600 focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent transition-all duration-200 focus:scale-[1.02]"
+                            placeholder="Nombre de usuario"
+                            type="text"
+                            value={username}
+                            onChange={(e) => setUsername(e.target.value)}
+                        />
                     </div>
-
-                    <div className="input-group">
-                        <div style={{ position: 'relative' }}>
-                            <Lock size={18} style={{ position: 'absolute', left: '15px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
-                            <input
-                                type="password"
-                                placeholder="Contraseña habitual"
-                                value={password}
-                                onChange={(e) => setPassword(e.target.value)}
-                                style={{
-                                    width: '100%',
-                                    padding: '14px 14px 14px 45px',
-                                    borderRadius: '12px',
-                                    border: '1px solid var(--glass-border)',
-                                    background: 'rgba(0,0,0,0.2)',
-                                    color: 'white',
-                                    fontSize: '1rem',
-                                    outline: 'none'
-                                }}
-                            />
+                    <div className="relative group">
+                        <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                            <span className="material-symbols-outlined text-slate-500">lock</span>
                         </div>
+                        <input
+                            className="w-full pl-12 pr-4 py-4 bg-white/40 border border-slate-800/20 rounded-2xl text-slate-900 placeholder-slate-600 focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent transition-all duration-200 focus:scale-[1.02]"
+                            placeholder="Contraseña habitual"
+                            type="password"
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
+                        />
                     </div>
 
                     <button
                         type="submit"
                         disabled={isLoading}
-                        className="btn-select primary"
-                        style={{ marginTop: '10px' }}
+                        className="w-full py-4 px-6 rounded-full bg-black text-white font-bold text-base shadow-xl shadow-black/20 disabled:opacity-70 btn-game"
                     >
                         {isLoading ? 'Verificando...' : 'Entrar al Sistema'}
                     </button>
@@ -121,11 +105,17 @@ const Login = ({ onLoginSuccess, onCancel }: LoginProps) => {
 
                 <button
                     onClick={onCancel}
-                    style={{ marginTop: '25px', width: '100%', background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', textDecoration: 'underline', fontSize: '0.9rem' }}
+                    className="block text-center text-sm font-semibold text-black hover:text-black/70 transition-colors animate-slide-up [animation-delay:300ms]"
                 >
                     Volver al inicio
                 </button>
-            </div>
+            </main>
+
+            <footer className="absolute bottom-8 w-full text-center z-10 pointer-events-none opacity-40">
+                <p className="text-[10px] font-bold tracking-widest text-black">
+                    © 2026 SCHOOL TRANSPORT
+                </p>
+            </footer>
         </div>
     );
 };
