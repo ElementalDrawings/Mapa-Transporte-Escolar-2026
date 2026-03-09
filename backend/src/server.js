@@ -190,7 +190,7 @@ fastify.post('/passengers', async (request, reply) => {
   const { groupId, name } = request.body;
   const client = await fastify.pg.connect();
   try {
-    await client.query('INSERT INTO passengers (group_id, name) VALUES ($1, $2)', [groupId, name]);
+    await client.query('INSERT INTO passengers (group_id, name, is_on_board) VALUES ($1, $2, TRUE)', [groupId, name]);
     fastify.io.emit('sync_passengers'); // Real-time notify
     return { success: true };
   } finally {
@@ -242,7 +242,7 @@ fastify.get('/active-passengers/:busId', async (request, reply) => {
       SELECT p.name 
       FROM passengers p
       JOIN passenger_groups g ON p.group_id = g.id
-      WHERE g.bus_id = $1 AND g.is_active = TRUE AND p.is_on_board = TRUE
+      WHERE g.bus_id = $1 AND p.is_on_board = TRUE
     `;
     const { rows } = await client.query(query, [busId]);
     return rows.map(r => r.name);

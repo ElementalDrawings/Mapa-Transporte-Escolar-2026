@@ -37,24 +37,6 @@ const PassengerGroups = ({ onBack, onAddGroup }: PassengerGroupsProps) => {
         fetchGroups();
     }, []);
 
-    const toggleGroup = async (id: string, currentStatus: boolean) => {
-        const nextStatus = !currentStatus;
-        // Optimistic update
-        setGroups(groups.map((g: Group) => g.id === id ? { ...g, is_active: nextStatus } : g));
-
-        try {
-            await fetch(`${API_URL}/groups/toggle`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ groupId: id, isActive: nextStatus })
-            });
-        } catch (err) {
-            console.error('Error toggling group:', err);
-            // Revert on error
-            fetchGroups();
-        }
-    };
-
     return (
         <div className="min-h-screen flex flex-col items-center justify-between p-6 text-slate-900 relative">
             <header className="w-full max-w-sm text-center mb-8 z-10 pt-8">
@@ -71,14 +53,6 @@ const PassengerGroups = ({ onBack, onAddGroup }: PassengerGroupsProps) => {
                     <div className="text-center py-10 opacity-50">Cargando grupos...</div>
                 ) : groups.map((group: Group) => (
                     <div key={group.id} className="w-full bg-white rounded-3xl p-4 shadow-lg flex items-center justify-between group-card">
-
-                        {/* Switch Toggle */}
-                        <button
-                            onClick={() => toggleGroup(group.id, group.is_active)}
-                            className={`w-14 h-8 rounded-full p-1 transition-colors duration-300 flex items-center ${group.is_active ? 'bg-green-500' : 'bg-slate-200'}`}
-                        >
-                            <div className={`w-6 h-6 rounded-full bg-white shadow-md transform transition-transform duration-300 ${group.is_active ? 'translate-x-6' : 'translate-x-0'}`}></div>
-                        </button>
 
                         <div className="flex-1 px-4 text-center">
                             <h3 className="font-bold text-lg leading-none">{group.name}</h3>

@@ -49,7 +49,7 @@ const AddPassenger = ({ onBack, groupId }: ComponentProps) => {
             });
             if (res.ok) {
                 // Fetch again to ensure sync with DB, or optimistically add
-                setPassengers([...passengers, { name, is_on_board: false }]);
+                setPassengers([...passengers, { name, is_on_board: true }]);
             }
         } catch (err) {
             console.error('Error adding passenger:', err);
