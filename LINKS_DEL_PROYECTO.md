@@ -6,7 +6,7 @@ Aquí tienes acceso directo a todas las partes de tu sistema desplegado en la nu
 ### 📱 Aplicación (Frontend)
 **Para Apoderados y Conductores:**
 👉 **[https://transporte-escolar-2026.vercel.app](https://transporte-escolar-2026.vercel.app)**
-*Este es el enlace que debes compartir. Funciona en PC y celulares.*
+*Este es el enlace ÚNICO y oficial. Funciona en PC y celulares. (El enlace anterior transporte-tia-paty-2026 fue dado de baja).*
 
 ---
 
