@@ -9,6 +9,7 @@ import './App.css'; // Maintaining for legacy styles if needed, but mostly overr
 
 function App() {
   const [role, setRole] = useState<'selecting' | 'login_driver' | 'driver' | 'parent' | 'passenger_groups' | 'add_passenger' | 'passenger_list'>('selecting');
+  const [selectedGroupId, setSelectedGroupId] = useState<string | null>(null);
 
   const handleLoginSuccess = () => {
     setRole('driver');
@@ -31,13 +32,16 @@ function App() {
     return (
       <PassengerGroups
         onBack={() => setRole('driver')}
-        onAddGroup={() => setRole('add_passenger')}
+        onAddGroup={(id) => {
+          setSelectedGroupId(id);
+          setRole('add_passenger');
+        }}
       />
     );
   }
 
   if (role === 'add_passenger') {
-    return <AddPassenger groupId="default" onBack={() => setRole('passenger_groups')} />;
+    return <AddPassenger groupId={selectedGroupId} onBack={() => setRole('passenger_groups')} />;
   }
 
   if (role === 'parent') {

@@ -130,7 +130,7 @@ const AddPassenger = ({ onBack, groupId }: ComponentProps) => {
                 ) : passengers.map((p: Passenger, idx: number) => (
                     <div
                         key={idx}
-                        className="w-full aspect-square rounded-3xl bg-white text-slate-900 font-bold text-sm shadow-xl shadow-black/5 flex flex-col items-center justify-between p-3 relative"
+                        className="w-full min-h-[140px] rounded-3xl bg-white text-slate-900 font-bold text-sm shadow-xl shadow-black/5 flex flex-col items-center justify-between p-3 relative"
                     >
                         {/* Delete Button (Top Right) */}
                         <button
@@ -140,9 +140,9 @@ const AddPassenger = ({ onBack, groupId }: ComponentProps) => {
                             <span className="material-symbols-outlined text-sm">close</span>
                         </button>
 
-                        <div className="flex flex-col items-center mt-2 flex-1 justify-center">
-                            <span className="material-symbols-outlined text-3xl mb-1 text-slate-400">person</span>
-                            <span className="truncate w-full text-center px-1">{p.name}</span>
+                        <div className="flex flex-col items-center mt-2 flex-1 justify-center overflow-hidden">
+                            <span className="material-symbols-outlined text-3xl mb-1 text-slate-400 shrink-0">person</span>
+                            <span className="truncate w-full text-center px-1 block">{p.name}</span>
                         </div>
 
                         {/* Toggle Switch */}
@@ -155,11 +155,10 @@ const AddPassenger = ({ onBack, groupId }: ComponentProps) => {
                     </div>
                 ))}
 
-                {/* Add Buttons (Slots) */}
-                {/* Rendering a few empty slots to act as "Add" buttons, but just one always visible is enough */}
+                {/* Add Button (Slot) */}
                 <button
                     onClick={addPassenger}
-                    className="w-full aspect-square rounded-3xl bg-white/40 border-2 border-dashed border-slate-900/10 text-slate-900/40 hover:bg-white hover:text-slate-900 hover:border-transparent transition-all duration-200 flex items-center justify-center"
+                    className="w-full h-32 rounded-3xl bg-white/40 border-2 border-dashed border-slate-900/10 text-slate-900/40 hover:bg-white hover:text-slate-900 hover:border-transparent transition-all duration-200 flex items-center justify-center"
                 >
                     <span className="material-symbols-outlined text-4xl">add</span>
                 </button>
