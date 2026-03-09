@@ -125,7 +125,7 @@ function App() {
 
       <footer className="mt-12 text-center z-10 pointer-events-none opacity-50 animate-slide-up [animation-delay:400ms]">
         <p className="text-[10px] font-bold tracking-widest text-black">
-          © 2026 SCHOOL TRANSPORT
+          © 2026 SCHOOL TRANSPORT - V.2.1
         </p>
         {/* Anti-Cache Button preserved but styled minimally */}
         <button
