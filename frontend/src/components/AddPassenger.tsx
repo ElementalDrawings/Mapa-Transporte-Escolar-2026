@@ -4,6 +4,7 @@ import { API_URL } from '../config';
 interface Passenger {
     name: string;
     is_on_board: boolean;
+    boarding_order: number;
 }
 
 interface ComponentProps {
@@ -38,18 +39,21 @@ const AddPassenger = ({ onBack, groupId }: ComponentProps) => {
     }, [groupId]);
 
     const addPassenger = async () => {
-        const name = prompt("Nombre del pasajero:");
-        if (!name || !groupId) return;
+        const nameSelection = prompt("Nombre del pasajero:");
+        if (!nameSelection || !groupId) return;
+
+        const orderSelection = prompt("Número de orden (ej: 1, 2, 3...):", (passengers.length + 1).toString());
+        const boardingOrder = parseInt(orderSelection || "0", 10);
 
         try {
             const res = await fetch(`${API_URL}/passengers`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ groupId, name })
+                body: JSON.stringify({ groupId, name: nameSelection, boardingOrder })
             });
             if (res.ok) {
                 // Fetch again to ensure sync with DB, or optimistically add
-                setPassengers([...passengers, { name, is_on_board: true }]);
+                setPassengers([...passengers, { name: nameSelection, is_on_board: true, boarding_order: boardingOrder }]);
             }
         } catch (err) {
             console.error('Error adding passenger:', err);
@@ -90,6 +94,28 @@ const AddPassenger = ({ onBack, groupId }: ComponentProps) => {
         } catch (err) {
             console.error('Error toggling passenger:', err);
             fetchPassengers(); // Revert on error
+        }
+    };
+
+    const updatePassengerOrder = async (name: string, currentOrder: number) => {
+        if (!groupId) return;
+        const newOrderStr = prompt(`Cambiar número de orden para ${name}:`, currentOrder.toString());
+        if (newOrderStr === null) return;
+        const boardingOrder = parseInt(newOrderStr || "0", 10);
+
+        // Optimistic update
+        setPassengers(passengers.map((p: Passenger) => p.name === name ? { ...p, boarding_order: boardingOrder } : p)
+            .sort((a, b) => a.boarding_order - b.boarding_order));
+
+        try {
+            await fetch(`${API_URL}/passengers/update-order`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ groupId, name, boardingOrder })
+            });
+        } catch (err) {
+            console.error('Error updating order:', err);
+            fetchPassengers();
         }
     };
 
@@ -141,7 +167,13 @@ const AddPassenger = ({ onBack, groupId }: ComponentProps) => {
                         </button>
 
                         <div className="flex flex-col items-center mt-2 flex-1 justify-center overflow-hidden">
-                            <span className="material-symbols-outlined text-3xl mb-1 text-slate-400 shrink-0">person</span>
+                            <button
+                                onClick={() => updatePassengerOrder(p.name, p.boarding_order)}
+                                className="w-8 h-8 bg-slate-100 rounded-full flex items-center justify-center text-[10px] text-slate-500 mb-1 hover:bg-yellow-400 hover:text-white transition-colors"
+                                title="Cambiar orden"
+                            >
+                                {p.boarding_order}
+                            </button>
                             <span className="truncate w-full text-center px-1 block">{p.name}</span>
                         </div>
 

@@ -165,7 +165,7 @@ fastify.get('/groups/:busId', async (request, reply) => {
   try {
     const { rows: groups } = await client.query('SELECT * FROM passenger_groups WHERE bus_id = $1', [busId]);
     for (let group of groups) {
-      const { rows: passengers } = await client.query('SELECT name, is_on_board FROM passengers WHERE group_id = $1', [group.id]);
+      const { rows: passengers } = await client.query('SELECT name, is_on_board, boarding_order FROM passengers WHERE group_id = $1 ORDER BY boarding_order ASC, name ASC', [group.id]);
       group.passengers = passengers; // Now an array of objects
     }
     return groups;
@@ -187,10 +187,22 @@ fastify.post('/groups/toggle', async (request, reply) => {
 });
 
 fastify.post('/passengers', async (request, reply) => {
-  const { groupId, name } = request.body;
+  const { groupId, name, boardingOrder } = request.body;
   const client = await fastify.pg.connect();
   try {
-    await client.query('INSERT INTO passengers (group_id, name, is_on_board) VALUES ($1, $2, TRUE)', [groupId, name]);
+    await client.query('INSERT INTO passengers (group_id, name, is_on_board, boarding_order) VALUES ($1, $2, TRUE, $3)', [groupId, name, boardingOrder || 0]);
+    fastify.io.emit('sync_passengers'); // Real-time notify
+    return { success: true };
+  } finally {
+    client.release();
+  }
+});
+
+fastify.post('/passengers/update-order', async (request, reply) => {
+  const { groupId, name, boardingOrder } = request.body;
+  const client = await fastify.pg.connect();
+  try {
+    await client.query('UPDATE passengers SET boarding_order = $1 WHERE group_id = $2 AND name = $3', [boardingOrder, groupId, name]);
     fastify.io.emit('sync_passengers'); // Real-time notify
     return { success: true };
   } finally {
@@ -239,13 +251,14 @@ fastify.get('/active-passengers/:busId', async (request, reply) => {
   const client = await fastify.pg.connect();
   try {
     const query = `
-      SELECT p.name 
+      SELECT p.name, p.boarding_order
       FROM passengers p
       JOIN passenger_groups g ON p.group_id = g.id
       WHERE g.bus_id = $1 AND p.is_on_board = TRUE
+      ORDER BY p.boarding_order ASC, p.name ASC
     `;
     const { rows } = await client.query(query, [busId]);
-    return rows.map(r => r.name);
+    return rows; // Return full objects with order
   } finally {
     client.release();
   }

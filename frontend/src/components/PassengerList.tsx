@@ -67,16 +67,16 @@ const PassengerList = ({ onBack }: ComponentProps) => {
                         <p>No hay pasajeros marcados en ruta.</p>
                     </div>
                 ) : (
-                    activePassengers.map((name, idx) => (
+                    activePassengers.map((p: any, idx) => (
                         <div
                             key={idx}
                             className="w-full h-16 rounded-full bg-white shadow-xl shadow-black/5 flex items-center px-6 space-x-4"
                             style={{ animationDelay: `${idx * 0.1}s`, animationDuration: '3s' }}
                         >
-                            <div className="w-10 h-10 bg-yellow-100 rounded-full flex items-center justify-center text-yellow-600 font-bold">
-                                {name.charAt(0).toUpperCase()}
+                            <div className="w-10 h-10 bg-yellow-100 rounded-full flex items-center justify-center text-yellow-600 font-bold overflow-hidden">
+                                {p.boarding_order || '#'}
                             </div>
-                            <span className="font-bold text-slate-900 text-lg truncate">{name}</span>
+                            <span className="font-bold text-slate-900 text-lg truncate flex-1">{p.name}</span>
                         </div>
                     ))
                 )}
