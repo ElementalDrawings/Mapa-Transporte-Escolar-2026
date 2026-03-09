@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="es"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Acceso Conductor Tía Paty</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: "#FFB800", // Hyundai H1 Yellow
+                        "surface-glass": "rgba(255, 255, 255, 0.60)",
+                        "surface-glass-hover": "rgba(255, 255, 255, 0.80)",
+                    },
+                    fontFamily: {
+                        sans: ["Inter", "sans-serif"],
+                    },
+                    borderRadius: {
+                        '3xl': '24px',
+                        '4xl': '32px',
+                    },
+                },
+            },
+        };
+    </script>
+<style>
+        body {
+            background-color: #FFB800;
+            background-image: radial-gradient(circle at 100% 0%, rgba(255,255,255,0.2) 0%, transparent 20%), 
+                              radial-gradient(circle at 0% 100%, rgba(255,255,255,0.2) 0%, transparent 20%);
+        }
+    </style>
+<style>
+        body {
+          min-height: max(884px, 100dvh);
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="min-h-screen flex flex-col items-center justify-center p-6 text-slate-900 relative">
+<main class="w-full max-w-sm flex flex-col items-center z-10">
+<div class="mb-8">
+<div class="w-24 h-24 bg-black rounded-3xl flex items-center justify-center shadow-xl shadow-black/10">
+<span class="material-symbols-outlined text-4xl text-[#FFB800]">lock</span>
+</div>
+</div>
+<div class="text-center mb-10">
+<h1 class="text-3xl font-extrabold tracking-tight text-black mb-2">
+                Acceso Conductor
+            </h1>
+<p class="text-sm font-medium text-black/60">
+                Ingresa tus credenciales para continuar
+            </p>
+</div>
+<div class="w-full space-y-4 mb-8">
+<div class="relative group">
+<div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+<span class="material-symbols-outlined text-slate-500">person</span>
+</div>
+<input class="w-full pl-12 pr-4 py-4 bg-white/40 border border-slate-800/20 rounded-2xl text-slate-900 placeholder-slate-600 focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent transition-all duration-200" placeholder="Nombre de usuario" type="text"/>
+</div>
+<div class="relative group">
+<div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+<span class="material-symbols-outlined text-slate-500">lock</span>
+</div>
+<input class="w-full pl-12 pr-4 py-4 bg-white/40 border border-slate-800/20 rounded-2xl text-slate-900 placeholder-slate-600 focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent transition-all duration-200" placeholder="Contraseña habitual" type="password"/>
+</div>
+</div>
+<div class="w-full space-y-6">
+<button class="w-full py-4 px-6 rounded-full bg-black text-white font-bold text-base hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 shadow-xl shadow-black/20">
+                Entrar al Sistema
+            </button>
+<a class="block text-center text-sm font-semibold text-black hover:text-black/70 transition-colors" href="#">
+                Volver al inicio
+            </a>
+</div>
+</main>
+<footer class="absolute bottom-8 w-full text-center z-10 pointer-events-none opacity-40">
+<p class="text-[10px] font-bold tracking-widest text-black">
+            © 2026 SCHOOL TRANSPORT
+        </p>
+</footer>
+
+</body></html>

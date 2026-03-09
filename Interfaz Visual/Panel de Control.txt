@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="es"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Panel de Control - Transporte Tía Paty</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: "#FFB800", // Hyundai H1 Yellow
+                        "surface-glass": "rgba(255, 255, 255, 0.60)",
+                        "surface-glass-hover": "rgba(255, 255, 255, 0.80)",
+                    },
+                    fontFamily: {
+                        sans: ["Inter", "sans-serif"],
+                    },
+                    borderRadius: {
+                        '3xl': '24px',
+                        '4xl': '32px',
+                        '5xl': '40px',
+                    },
+                    keyframes: {
+                        wiggle: {
+                            '0%, 100%': { transform: 'rotate(-5deg)' },
+                            '50%': { transform: 'rotate(5deg)' },
+                        },
+                        pulse: {
+                            '0%, 100%': { opacity: '1' },
+                            '50%': { opacity: '.7' },
+                        }
+                    },
+                    animation: {
+                        'wiggle': 'wiggle 2s ease-in-out infinite',
+                        'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                    }
+                },
+            },
+        };
+    </script>
+<style>
+        body {
+            background-color: #FFB800;
+            background-image: radial-gradient(circle at 100% 0%, rgba(255,255,255,0.2) 0%, transparent 20%), 
+                              radial-gradient(circle at 0% 100%, rgba(255,255,255,0.2) 0%, transparent 20%);
+        }
+        .glass-panel {
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            box-shadow: 0 20px 40px -10px rgba(0,0,0,0.1);
+            border: 1px solid rgba(255,255,255,0.5);
+        }
+    </style>
+<style>
+        body {
+          min-height: max(884px, 100dvh);
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="min-h-screen flex flex-col items-center justify-between p-6 text-slate-900 relative">
+<div class="flex-none h-4"></div>
+<main class="w-full max-w-sm flex flex-col items-center space-y-8 z-10 my-auto">
+<header class="text-center w-full">
+<p class="text-[10px] font-bold uppercase tracking-[0.3em] opacity-50 mb-3">
+                Transporte Tía Paty
+            </p>
+<h1 class="text-4xl font-black tracking-tighter text-slate-900 leading-none">
+                PANEL DE<br/>CONTROL
+            </h1>
+</header>
+<div class="w-full bg-white rounded-5xl p-8 shadow-xl shadow-orange-900/10 flex flex-col items-center justify-center relative overflow-hidden group">
+<div class="absolute top-0 right-0 w-32 h-32 bg-yellow-50 rounded-full -mr-10 -mt-10 transition-transform group-hover:scale-110"></div>
+<h2 class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-8 relative z-10">
+                Estado de Ruta
+            </h2>
+<div class="relative z-10 flex flex-col items-center">
+<div class="w-24 h-24 bg-slate-50 rounded-full flex items-center justify-center mb-5 border-4 border-slate-100 shadow-inner">
+<span class="material-symbols-outlined text-4xl text-slate-300">
+                        hourglass_empty
+                    </span>
+</div>
+<div class="text-center">
+<h3 class="text-2xl font-bold text-slate-900 mb-1">En espera</h3>
+<p class="text-xs font-medium text-slate-400">Sin pasajeros a bordo</p>
+</div>
+</div>
+<div class="flex space-x-2 mt-8 opacity-20">
+<div class="w-2 h-2 rounded-full bg-slate-900"></div>
+<div class="w-2 h-2 rounded-full bg-slate-900"></div>
+<div class="w-2 h-2 rounded-full bg-slate-900"></div>
+</div>
+</div>
+<button class="w-full group relative">
+<div class="absolute inset-0 bg-slate-800 rounded-full translate-y-2 blur-sm opacity-20"></div>
+<div class="relative w-full py-6 px-8 rounded-full bg-slate-900 text-white font-bold text-lg tracking-wide hover:bg-black active:scale-[0.98] transition-all duration-200 flex items-center justify-center space-x-3 shadow-2xl shadow-slate-900/20">
+<span>INICIAR RUTA</span>
+<span class="material-symbols-outlined group-hover:translate-x-1 transition-transform">
+                    arrow_forward
+                </span>
+</div>
+</button>
+<button class="w-full group relative">
+<div class="relative w-full py-6 px-8 rounded-full bg-white border-2 border-slate-900 text-slate-900 font-bold text-lg tracking-wide hover:bg-slate-50 active:scale-[0.98] transition-all duration-200 flex items-center justify-center space-x-3 shadow-lg shadow-slate-900/5">
+<span>AGREGAR PASAJEROS</span>
+<span class="material-symbols-outlined group-hover:scale-110 transition-transform">
+                    person_add
+                </span>
+</div>
+</button>
+</main>
+<footer class="mt-8 text-center z-10 pointer-events-none opacity-40">
+<p class="text-[10px] font-bold tracking-widest text-black">
+            © 2026 SCHOOL TRANSPORT
+        </p>
+</footer>
+</body></html>

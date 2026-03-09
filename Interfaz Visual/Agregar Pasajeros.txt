@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="es"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Gestión de Pasajeros Tía Paty</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: "#FFB800", // Hyundai H1 Yellow
+                        "surface-glass": "rgba(255, 255, 255, 0.60)",
+                        "surface-glass-hover": "rgba(255, 255, 255, 0.80)",
+                    },
+                    fontFamily: {
+                        sans: ["Inter", "sans-serif"],
+                    },
+                    borderRadius: {
+                        '3xl': '24px',
+                        '4xl': '32px',
+                    },
+                    keyframes: {
+                        wiggle: {
+                            '0%, 100%': { transform: 'rotate(-5deg)' },
+                            '50%': { transform: 'rotate(5deg)' },
+                        }
+                    },
+                    animation: {
+                        'wiggle': 'wiggle 2s ease-in-out infinite',
+                    }
+                },
+            },
+        };
+    </script>
+<style>
+        body {
+            background-color: #FFB800;
+            background-image: radial-gradient(circle at 100% 0%, rgba(255,255,255,0.2) 0%, transparent 20%), 
+                              radial-gradient(circle at 0% 100%, rgba(255,255,255,0.2) 0%, transparent 20%);
+            min-height: max(884px, 100dvh);
+        }
+        .glass-panel {
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            box-shadow: 0 10px 40px -10px rgba(0,0,0,0.05);
+            border: 1px solid rgba(255,255,255,0.4);
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="min-h-screen flex flex-col items-center justify-center p-6 text-slate-900 relative">
+<header class="w-full max-w-sm text-center mb-8 z-10">
+<h1 class="text-3xl font-extrabold tracking-tight text-slate-900 mb-1">
+        Agregar Pasajeros
+    </h1>
+<p class="text-xs font-semibold uppercase tracking-[0.2em] opacity-60">
+        2026
+    </p>
+</header>
+<main class="w-full max-w-sm flex flex-col items-center space-y-4 z-10">
+<button class="w-full py-4 px-6 rounded-full bg-white text-slate-900 font-semibold text-sm hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 shadow-xl shadow-black/10 flex items-center justify-center">
+<span class="material-symbols-outlined text-2xl font-bold">add</span>
+</button>
+<button class="w-full py-4 px-6 rounded-full bg-white text-slate-900 font-semibold text-sm hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 shadow-xl shadow-black/10 flex items-center justify-center">
+<span class="material-symbols-outlined text-2xl font-bold">add</span>
+</button>
+<button class="w-full py-4 px-6 rounded-full bg-white text-slate-900 font-semibold text-sm hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 shadow-xl shadow-black/10 flex items-center justify-center">
+<span class="material-symbols-outlined text-2xl font-bold">add</span>
+</button>
+<button class="w-full py-4 px-6 rounded-full bg-white text-slate-900 font-semibold text-sm hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 shadow-xl shadow-black/10 flex items-center justify-center">
+<span class="material-symbols-outlined text-2xl font-bold">add</span>
+</button>
+<button class="w-full py-4 px-6 rounded-full bg-white text-slate-900 font-semibold text-sm hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 shadow-xl shadow-black/10 flex items-center justify-center">
+<span class="material-symbols-outlined text-2xl font-bold">add</span>
+</button>
+<button class="w-full py-4 px-6 rounded-full bg-white text-slate-900 font-semibold text-sm hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 shadow-xl shadow-black/10 flex items-center justify-center">
+<span class="material-symbols-outlined text-2xl font-bold">add</span>
+</button>
+</main>
+<footer class="mt-12 text-center z-10 pointer-events-none opacity-50">
+<p class="text-[10px] font-bold tracking-widest text-black">
+        © 2026 SCHOOL TRANSPORT
+    </p>
+</footer>
+</body></html>
