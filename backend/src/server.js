@@ -264,6 +264,39 @@ fastify.get('/active-passengers/:busId', async (request, reply) => {
   }
 });
 
+fastify.get('/progress/:busId', async (request, reply) => {
+  const { busId } = request.params;
+  const client = await fastify.pg.connect();
+  try {
+    // Count total passengers for the bus
+    const totalQuery = `
+      SELECT COUNT(p.id) as count
+      FROM passengers p
+      JOIN passenger_groups g ON p.group_id = g.id
+      WHERE g.bus_id = $1
+    `;
+    const totalResult = await client.query(totalQuery, [busId]);
+    const total = parseInt(totalResult.rows[0].count, 10);
+
+    // Count passengers currently on board for the bus
+    const onboardQuery = `
+      SELECT COUNT(p.id) as count
+      FROM passengers p
+      JOIN passenger_groups g ON p.group_id = g.id
+      WHERE g.bus_id = $1 AND p.is_on_board = TRUE
+    `;
+    const onboardResult = await client.query(onboardQuery, [busId]);
+    const onboard = parseInt(onboardResult.rows[0].count, 10);
+
+    return { total, onboard };
+  } catch (err) {
+    fastify.log.error(err);
+    reply.status(500).send({ error: 'Failed to fetch progress' });
+  } finally {
+    client.release();
+  }
+});
+
 // Simulation Endpoint (Modified to update memory)
 // Simulation Endpoint (Modified to update memory - Loop Removed)
 fastify.get('/simulate', async () => {

@@ -1,4 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { io } from 'socket.io-client';
+import { API_URL } from './config';
 import Map from './components/Map';
 import DriverDashboard from './components/DriverDashboard';
 import Login from './components/Login';
@@ -10,14 +12,39 @@ import './App.css'; // Maintaining for legacy styles if needed, but mostly overr
 function App() {
   const [role, setRole] = useState<'selecting' | 'login_driver' | 'driver' | 'parent' | 'passenger_groups' | 'add_passenger' | 'passenger_list'>('selecting');
   const [selectedGroupId, setSelectedGroupId] = useState<string | null>(null);
+  const [progress, setProgress] = useState({ total: 0, onboard: 0 });
+
+  const fetchProgress = async () => {
+    try {
+      const res = await fetch(`${API_URL}/progress/NB-2026`);
+      if (res.ok) {
+        const data = await res.json();
+        setProgress(data);
+      }
+    } catch (err) {
+      console.error('Error fetching progress:', err);
+    }
+  };
+
+  useEffect(() => {
+    // Only fetch progress if we are on the selection screen
+    if (role === 'selecting') {
+      fetchProgress();
+
+      const socket = io(API_URL);
+      socket.on('sync_passengers', () => {
+        fetchProgress();
+      });
+
+      return () => {
+        socket.disconnect();
+      };
+    }
+  }, [role]);
 
   const handleLoginSuccess = () => {
     setRole('driver');
   };
-
-  /* const _handleDriverNavigation = (target: string) => {
-    if (target === 'passenger_groups') setRole('passenger_groups');
-  }; */
 
   // Render Logic
   if (role === 'login_driver') {
@@ -52,6 +79,11 @@ function App() {
     return <PassengerList onBack={() => setRole('parent')} />;
   }
 
+  // Calculate dynamic progress values
+  const percentage = progress.total === 0 ? 0 : Math.round((progress.onboard / progress.total) * 100);
+  const circumference = 2 * Math.PI * 42; // r=42 -> ~264
+  const strokeDashoffset = circumference - (percentage / 100) * circumference;
+
   // Default: Selecting Screen (New UI)
   return (
     <div className="min-h-screen flex flex-col items-center justify-center p-6 text-slate-900 relative">
@@ -70,11 +102,22 @@ function App() {
           <div className="relative w-32 h-32">
             <svg className="w-full h-full" viewBox="0 0 100 100">
               <circle className="text-white/40" cx="50" cy="50" fill="transparent" r="42" stroke="currentColor" strokeLinecap="round" strokeWidth="8"></circle>
-              <circle className="text-black transition-all duration-300 origin-center -rotate-90" cx="50" cy="50" fill="transparent" r="42" stroke="currentColor" strokeDasharray="264" strokeDashoffset="66" strokeLinecap="round" strokeWidth="8"></circle>
+              <circle
+                className="text-black transition-all duration-700 origin-center -rotate-90 ease-out"
+                cx="50"
+                cy="50"
+                fill="transparent"
+                r="42"
+                stroke="currentColor"
+                strokeDasharray={circumference}
+                strokeDashoffset={strokeDashoffset}
+                strokeLinecap="round"
+                strokeWidth="8"
+              ></circle>
             </svg>
             <div className="absolute inset-0 flex flex-col items-center justify-center">
               <span className="material-symbols-outlined text-3xl mb-1">local_shipping</span>
-              <span className="text-xs font-bold">75%</span>
+              <span className="text-xs font-bold">{percentage}%</span>
             </div>
           </div>
           <p className="mt-3 text-sm font-medium text-slate-900/70">Progreso Diario</p>
@@ -125,7 +168,7 @@ function App() {
 
       <footer className="mt-12 text-center z-10 pointer-events-none opacity-50 animate-slide-up [animation-delay:400ms]">
         <p className="text-[10px] font-bold tracking-widest text-black">
-          © 2026 SCHOOL TRANSPORT - V.2.1
+          © 2026 SCHOOL TRANSPORT - V.2.2
         </p>
         {/* Anti-Cache Button preserved but styled minimally */}
         <button
