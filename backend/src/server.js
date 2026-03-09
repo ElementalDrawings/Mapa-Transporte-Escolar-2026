@@ -8,7 +8,7 @@ fastify.register(require('@fastify/postgres'), {
 
 fastify.register(require('@fastify/cors'), {
   origin: true,
-  methods: ["GET", "POST", "OPTIONS"],
+  methods: ["GET", "POST", "DELETE", "PUT", "PATCH", "OPTIONS"],
   credentials: true
 });
 
