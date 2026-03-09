@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { io } from 'socket.io-client';
 import { API_URL } from './config';
 import Map from './components/Map';
@@ -7,12 +7,22 @@ import Login from './components/Login';
 import PassengerGroups from './components/PassengerGroups';
 import AddPassenger from './components/AddPassenger';
 import PassengerList from './components/PassengerList';
-import './App.css'; // Maintaining for legacy styles if needed, but mostly overriding
+import './App.css';
 
 function App() {
   const [role, setRole] = useState<'selecting' | 'login_driver' | 'driver' | 'parent' | 'passenger_groups' | 'add_passenger' | 'passenger_list'>('selecting');
   const [selectedGroupId, setSelectedGroupId] = useState<string | null>(null);
   const [progress, setProgress] = useState({ total: 0, onboard: 0 });
+
+  // Persistent Tracking State
+  const [isTracking, setIsTracking] = useState(false);
+  const [status, setStatus] = useState('En espera');
+  const [coords, setCoords] = useState<{ lat: number, lng: number, speed: number } | null>(null);
+  const [locationQueue, setLocationQueue] = useState<any[]>(() => {
+    const saved = localStorage.getItem('location_queue');
+    return saved ? JSON.parse(saved) : [];
+  });
+  const wakeLock = useRef<any>(null);
 
   const fetchProgress = async () => {
     try {
@@ -26,8 +36,78 @@ function App() {
     }
   };
 
+  // Tracking Logic
   useEffect(() => {
-    // Only fetch progress if we are on the selection screen
+    localStorage.setItem('location_queue', JSON.stringify(locationQueue));
+  }, [locationQueue]);
+
+  useEffect(() => {
+    const requestWakeLock = async () => {
+      try {
+        if ('wakeLock' in navigator) {
+          wakeLock.current = await (navigator as any).wakeLock.request('screen');
+        }
+      } catch (err) {
+        console.warn('WakeLock err:', err);
+      }
+    };
+
+    const releaseWakeLock = async () => {
+      if (wakeLock.current) {
+        await wakeLock.current.release();
+        wakeLock.current = null;
+      }
+    };
+
+    let watchId: number | null = null;
+    if (isTracking) {
+      setStatus('Buscando señal...');
+      requestWakeLock();
+      if (!navigator.geolocation) {
+        setStatus('Error GPS');
+        return;
+      }
+      watchId = navigator.geolocation.watchPosition(
+        async (position) => {
+          const { latitude, longitude, speed } = position.coords;
+          const newCoords = { lat: latitude, lng: longitude, speed: speed || 0 };
+          setCoords(newCoords);
+          setStatus('En Ruta');
+
+          const locEntry = {
+            busId: 'NB-2026',
+            ...newCoords,
+            timestamp: new Date().toISOString()
+          };
+
+          setLocationQueue(prev => [...prev.slice(-100), locEntry]);
+
+          if (navigator.onLine) {
+            try {
+              await fetch(`${API_URL}/location`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify([locEntry])
+              });
+            } catch (err) {
+              console.error('GPS Upload Error:', err);
+            }
+          }
+        },
+        (error) => setStatus(`Error: ${error.message}`),
+        { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+      );
+      return () => {
+        if (watchId !== null) navigator.geolocation.clearWatch(watchId);
+        releaseWakeLock();
+      };
+    } else {
+      setStatus('En espera');
+      releaseWakeLock();
+    }
+  }, [isTracking]);
+
+  useEffect(() => {
     if (role === 'selecting') {
       fetchProgress();
 
@@ -52,7 +132,17 @@ function App() {
   }
 
   if (role === 'driver') {
-    return <DriverDashboard onNavigateToPassengers={() => setRole('passenger_groups')} />;
+    return (
+      <DriverDashboard
+        onNavigateToPassengers={() => setRole('passenger_groups')}
+        onBack={() => setRole('selecting')}
+        isTracking={isTracking}
+        setIsTracking={setIsTracking}
+        status={status}
+        coords={coords}
+        locationQueue={locationQueue}
+      />
+    );
   }
 
   if (role === 'passenger_groups') {
@@ -81,10 +171,9 @@ function App() {
 
   // Calculate dynamic progress values
   const percentage = progress.total === 0 ? 0 : Math.round((progress.onboard / progress.total) * 100);
-  const circumference = 2 * Math.PI * 42; // r=42 -> ~264
+  const circumference = 2 * Math.PI * 42;
   const strokeDashoffset = circumference - (percentage / 100) * circumference;
 
-  // Default: Selecting Screen (New UI)
   return (
     <div className="min-h-screen flex flex-col items-center justify-center p-6 text-slate-900 relative">
       <header className="w-full max-w-sm text-center mb-8 z-10">
@@ -97,7 +186,6 @@ function App() {
       </header>
 
       <main className="w-full max-w-sm flex flex-col items-center space-y-6 z-10">
-        {/* Circular Progress */}
         <div className="relative flex flex-col items-center justify-center mb-4 animate-pop [animation-delay:0ms]">
           <div className="relative w-32 h-32">
             <svg className="w-full h-full" viewBox="0 0 100 100">
@@ -123,7 +211,6 @@ function App() {
           <p className="mt-3 text-sm font-medium text-slate-900/70">Progreso Diario</p>
         </div>
 
-        {/* Parent Card */}
         <div className="w-full bg-surface-glass hover:bg-surface-glass-hover glass-panel rounded-4xl p-6 animate-pop [animation-delay:100ms]">
           <div className="flex flex-row items-center space-x-4 mb-4">
             <div className="p-3 bg-white/60 rounded-full shadow-sm">
@@ -144,7 +231,6 @@ function App() {
           </button>
         </div>
 
-        {/* Driver Card */}
         <div className="w-full bg-surface-glass hover:bg-surface-glass-hover glass-panel rounded-4xl p-6 animate-pop [animation-delay:200ms]">
           <div className="flex flex-row items-center space-x-4 mb-4">
             <div className="p-3 bg-white/60 rounded-full shadow-sm">
@@ -170,7 +256,6 @@ function App() {
         <p className="text-[10px] font-bold tracking-widest text-black">
           © 2026 SCHOOL TRANSPORT - V.2.2
         </p>
-        {/* Anti-Cache Button preserved but styled minimally */}
         <button
           onClick={() => {
             if (confirm('¿Limpiar caché y actualizar aplicación?')) {
@@ -189,3 +274,4 @@ function App() {
 }
 
 export default App;
+

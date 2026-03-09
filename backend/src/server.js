@@ -174,6 +174,46 @@ fastify.get('/groups/:busId', async (request, reply) => {
   }
 });
 
+fastify.post('/groups', async (request, reply) => {
+  const { id, name, busId } = request.body;
+  const client = await fastify.pg.connect();
+  try {
+    await client.query(
+      'INSERT INTO passenger_groups (id, name, is_active, bus_id) VALUES ($1, $2, TRUE, $3)',
+      [id, name, busId]
+    );
+    return { success: true };
+  } finally {
+    client.release();
+  }
+});
+
+fastify.put('/groups/:id', async (request, reply) => {
+  const { id } = request.params;
+  const { name } = request.body;
+  const client = await fastify.pg.connect();
+  try {
+    await client.query('UPDATE passenger_groups SET name = $1 WHERE id = $2', [name, id]);
+    fastify.io.emit('sync_passengers');
+    return { success: true };
+  } finally {
+    client.release();
+  }
+});
+
+fastify.delete('/groups/:id', async (request, reply) => {
+  const { id } = request.params;
+  const client = await fastify.pg.connect();
+  try {
+    // Delete passengers first due to FK or let CASCADE handle it if set up
+    await client.query('DELETE FROM passenger_groups WHERE id = $1', [id]);
+    fastify.io.emit('sync_passengers');
+    return { success: true };
+  } finally {
+    client.release();
+  }
+});
+
 fastify.post('/groups/toggle', async (request, reply) => {
   const { groupId, isActive } = request.body;
   const client = await fastify.pg.connect();
