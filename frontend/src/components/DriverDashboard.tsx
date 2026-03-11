@@ -31,6 +31,17 @@ const DriverDashboard = ({
         const handleOffline = () => setIsOnline(false);
         window.addEventListener('online', handleOnline);
         window.addEventListener('offline', handleOffline);
+
+        // Fetch initial visibility
+        fetch(`${API_URL}/bus-config/NB-2026`)
+            .then(res => res.json())
+            .then(data => {
+                if (data && typeof data.is_visible === 'boolean') {
+                    setIsVisible(data.is_visible);
+                }
+            })
+            .catch(err => console.error('Error fetching visibility:', err));
+
         return () => {
             window.removeEventListener('online', handleOnline);
             window.removeEventListener('offline', handleOffline);
@@ -49,6 +60,23 @@ const DriverDashboard = ({
             });
         } catch (err) {
             console.error('Sync visibility fail:', err);
+        }
+    };
+
+    const handleToggleTracking = async () => {
+        const nextTracking = !isTracking;
+        setIsTracking(nextTracking);
+
+        // Automáticamente hacemos la ruta visible al iniciar o invisible al detener
+        setIsVisible(nextTracking);
+        try {
+            await fetch(`${API_URL}/bus-config`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ busId: 'NB-2026', is_visible: nextTracking })
+            });
+        } catch (err) {
+            console.error('Sync tracking visibility fail:', err);
         }
     };
 
@@ -141,7 +169,7 @@ const DriverDashboard = ({
                 {/* Actions */}
                 <div className="w-full space-y-4">
                     <button
-                        onClick={() => setIsTracking(!isTracking)}
+                        onClick={handleToggleTracking}
                         className="w-full group relative"
                     >
                         <div className={`absolute inset-0 rounded-full translate-y-1.5 blur-sm opacity-20 transition-colors ${isTracking ? 'bg-red-800' : 'bg-slate-800'}`}></div>

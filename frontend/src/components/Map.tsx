@@ -108,9 +108,14 @@ const Map = ({ onViewPassengers, onBack, socket }: MapProps) => {
             const response = await fetch(`${API_URL}/location/NB-2026`);
             const data = await response.json();
 
-            // Si el conductor tiene oculta la ubicación
-            if (data.status === 'hidden') {
-                setAddress('Ubicación oculta por el conductor');
+            // Si el conductor tiene oculta la ubicación o no hay datos
+            if (data.status === 'hidden' || data.status === 'waiting' || !data.lat || !data.lng) {
+                setAddress(data.message || 'Furgón fuera de ruta');
+                if (marker.current) {
+                    marker.current.remove();
+                    marker.current = null;
+                }
+                setBusLocation(null);
                 return;
             }
 

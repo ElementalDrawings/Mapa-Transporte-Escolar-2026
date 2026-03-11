@@ -112,6 +112,15 @@ fastify.get('/location/:busId', async (request, reply) => {
 
     const { rows } = await client.query(query, [busId]);
     if (rows.length > 0) {
+      const lastUpdate = new Date(rows[0].timestamp);
+      const now = new Date();
+      const diffMinutes = (now - lastUpdate) / (1000 * 60);
+
+      // Si la ubicación es de hace más de 10 minutos, consideramos que no está en ruta
+      if (diffMinutes > 10) {
+        return { status: 'waiting', lat: null, lng: null, message: 'Furgón fuera de servicio' };
+      }
+
       return rows[0];
     } else {
       return { status: 'waiting', lat: null, lng: null };
