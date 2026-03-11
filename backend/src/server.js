@@ -346,9 +346,28 @@ fastify.get('/simulate', async () => {
 
 fastify.ready(err => {
   if (err) throw err;
-  // Socket logic kept minimal for reference or future use
+  // Socket logic for real-time location updates
   fastify.io.on('connection', (socket) => {
     fastify.log.info(`Socket connected: ${socket.id}`);
+
+    // Join a room for a specific bus
+    socket.on('join_bus', (busId) => {
+      socket.join(`bus_${busId}`);
+      fastify.log.info(`Socket ${socket.id} joined bus_${busId}`);
+    });
+
+    // Handle location updates from driver and broadcast to parents
+    socket.on('driver_location_update', (data) => {
+      // data should contain { busId, lat, lng, speed, timestamp }
+      if (data && data.busId) {
+        // Broadcast to everyone in the bus room except sender (or including, it's fine)
+        fastify.io.to(`bus_${data.busId}`).emit('bus_location_update', data);
+      }
+    });
+
+    socket.on('disconnect', () => {
+      fastify.log.info(`Socket disconnected: ${socket.id}`);
+    });
   });
 });
 

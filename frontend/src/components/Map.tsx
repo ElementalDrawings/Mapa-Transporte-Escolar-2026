@@ -6,9 +6,10 @@ import { API_URL } from '../config';
 interface MapProps {
     onViewPassengers: () => void;
     onBack: () => void;
+    socket: any;
 }
 
-const Map = ({ onViewPassengers, onBack }: MapProps) => {
+const Map = ({ onViewPassengers, onBack, socket }: MapProps) => {
     const mapContainer = useRef<HTMLDivElement>(null);
     const map = useRef<maplibregl.Map | null>(null);
     const marker = useRef<maplibregl.Marker | null>(null);
@@ -17,6 +18,59 @@ const Map = ({ onViewPassengers, onBack }: MapProps) => {
     const [lastUpdate, setLastUpdate] = useState<Date | null>(null);
     const [mapStyle, setMapStyle] = useState('https://tiles.basemaps.cartocdn.com/gl/positron-gl-style/style.json');
     const [isAutoCentering, setIsAutoCentering] = useState(true);
+
+    // Common logic to process new locations
+    const handleNewLocation = (data: { lat: number, lng: number, speed?: number }) => {
+        if (!data.lat || !data.lng) return;
+
+        const newLocation = { lat: parseFloat(data.lat as any), lng: parseFloat(data.lng as any), speed: data.speed };
+        setBusLocation(newLocation);
+        setLastUpdate(new Date());
+
+        // Reverse Geocoding (Nominatim) - Optimized to save data
+        const shouldGeocode = !lastGeocodeCoords.current ||
+            Math.abs(lastGeocodeCoords.current.lat - newLocation.lat) > 0.0003 ||
+            Math.abs(lastGeocodeCoords.current.lng - newLocation.lng) > 0.0003;
+
+        if (shouldGeocode) {
+            lastGeocodeCoords.current = { lat: newLocation.lat, lng: newLocation.lng };
+            fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${newLocation.lat}&lon=${newLocation.lng}`)
+                .then(res => res.json())
+                .then(geo => {
+                    const addr = geo.address;
+                    const street = addr.road || addr.pedestrian || addr.suburb || 'Calle desconocida';
+                    const number = addr.house_number ? `, ${addr.house_number}` : '';
+                    setAddress(`${street}${number}`);
+                })
+                .catch(() => setAddress('Dirección no disponible'));
+        }
+
+        // Update Marker
+        if (map.current) {
+            if (!marker.current) {
+                const el = document.createElement('div');
+                el.className = 'bus-marker';
+                el.style.width = '40px';
+                el.style.height = '40px';
+                el.style.backgroundImage = 'url(https://cdn-icons-png.flaticon.com/512/3063/3063823.png)'; // Bus Icon
+                el.style.backgroundSize = 'cover';
+
+                marker.current = new maplibregl.Marker({ element: el })
+                    .setLngLat([newLocation.lng, newLocation.lat])
+                    .addTo(map.current);
+            } else {
+                marker.current.setLngLat([newLocation.lng, newLocation.lat]);
+            }
+
+            if (isAutoCentering) {
+                map.current.easeTo({
+                    center: [newLocation.lng, newLocation.lat],
+                    duration: 2000,
+                    easing: (t) => t // Linear
+                });
+            }
+        }
+    };
 
     // Initialize Map
     useEffect(() => {
@@ -46,7 +100,9 @@ const Map = ({ onViewPassengers, onBack }: MapProps) => {
         }
     }, [mapStyle]);
 
-    // Fetch Location
+    const lastGeocodeCoords = useRef<{ lat: number; lng: number } | null>(null);
+
+    // Fetch Location (Initial and fallback)
     const fetchLocation = async () => {
         try {
             const response = await fetch(`${API_URL}/location/NB-2026`);
@@ -58,59 +114,32 @@ const Map = ({ onViewPassengers, onBack }: MapProps) => {
                 return;
             }
 
-            if (data.lat && data.lng) {
-                const newLocation = { lat: parseFloat(data.lat), lng: parseFloat(data.lng), speed: data.speed };
-                setBusLocation(newLocation);
-                setLastUpdate(new Date());
-
-                // Reverse Geocoding (Nominatim) - CALLE + NÚMERO
-                fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${newLocation.lat}&lon=${newLocation.lng}`)
-                    .then(res => res.json())
-                    .then(geo => {
-                        const addr = geo.address;
-                        const street = addr.road || addr.pedestrian || addr.suburb || 'Calle desconocida';
-                        const number = addr.house_number ? `, ${addr.house_number}` : '';
-                        setAddress(`${street}${number}`);
-                    })
-                    .catch(() => setAddress('Dirección no disponible'));
-
-                // Update Marker
-                if (map.current) {
-                    if (!marker.current) {
-                        const el = document.createElement('div');
-                        el.className = 'bus-marker';
-                        el.style.width = '40px';
-                        el.style.height = '40px';
-                        el.style.backgroundImage = 'url(https://cdn-icons-png.flaticon.com/512/3063/3063823.png)'; // Bus Icon
-                        el.style.backgroundSize = 'cover';
-
-                        marker.current = new maplibregl.Marker({ element: el })
-                            .setLngLat([newLocation.lng, newLocation.lat])
-                            .addTo(map.current);
-                    } else {
-                        marker.current.setLngLat([newLocation.lng, newLocation.lat]);
-                    }
-
-                    if (isAutoCentering) {
-                        map.current.easeTo({
-                            center: [newLocation.lng, newLocation.lat],
-                            duration: 2000,
-                            easing: (t) => t // Linear
-                        });
-                    }
-                }
-            }
+            handleNewLocation(data);
         } catch (error) {
             console.error('Error fetching location:', error);
         }
     };
 
-    // Polling
+    // Socket & Polling Integration
     useEffect(() => {
         fetchLocation(); // Initial fetch
-        const interval = setInterval(fetchLocation, 2000);
-        return () => clearInterval(interval);
-    }, [isAutoCentering]);
+
+        // Listen for Real-time Socket updates (High efficiency)
+        if (socket) {
+            socket.on('bus_location_update', (data: any) => {
+                console.log('Socket location update:', data);
+                handleNewLocation(data);
+            });
+        }
+
+        // Keep a "safety" polling but much slower (every 30 seconds)
+        const interval = setInterval(fetchLocation, 30000);
+
+        return () => {
+            clearInterval(interval);
+            if (socket) socket.off('bus_location_update');
+        };
+    }, [isAutoCentering, socket]);
 
     return (
         <div className="min-h-screen flex flex-col items-center justify-between p-6 text-slate-900 relative">

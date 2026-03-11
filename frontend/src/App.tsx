@@ -36,6 +36,17 @@ function App() {
     }
   };
 
+  const socketRef = useRef<any>(null);
+  const lastUpdateRef = useRef<number>(0);
+
+  // Connection management
+  useEffect(() => {
+    socketRef.current = io(API_URL);
+    return () => {
+      if (socketRef.current) socketRef.current.disconnect();
+    };
+  }, []);
+
   // Tracking Logic
   useEffect(() => {
     localStorage.setItem('location_queue', JSON.stringify(locationQueue));
@@ -67,6 +78,7 @@ function App() {
         setStatus('Error GPS');
         return;
       }
+
       watchId = navigator.geolocation.watchPosition(
         async (position) => {
           const { latitude, longitude, speed } = position.coords;
@@ -80,17 +92,28 @@ function App() {
             timestamp: new Date().toISOString()
           };
 
+          // Update local queue for persistence
           setLocationQueue(prev => [...prev.slice(-100), locEntry]);
 
-          if (navigator.onLine) {
-            try {
-              await fetch(`${API_URL}/location`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify([locEntry])
-              });
-            } catch (err) {
-              console.error('GPS Upload Error:', err);
+          // BroadCast via Socket (Very efficient ~100 bytes)
+          if (socketRef.current && socketRef.current.connected) {
+            socketRef.current.emit('driver_location_update', locEntry);
+          }
+
+          // Save to Database only periodically to save mobile data (every 5s)
+          const now = Date.now();
+          if (now - lastUpdateRef.current > 5000) {
+            lastUpdateRef.current = now;
+            if (navigator.onLine) {
+              try {
+                await fetch(`${API_URL}/location`, {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify([locEntry])
+                });
+              } catch (err) {
+                console.error('GPS Upload Error:', err);
+              }
             }
           }
         },
@@ -108,17 +131,21 @@ function App() {
   }, [isTracking]);
 
   useEffect(() => {
-    if (role === 'selecting') {
+    if (role === 'selecting' || role === 'parent') {
       fetchProgress();
 
-      const socket = io(API_URL);
-      socket.on('sync_passengers', () => {
-        fetchProgress();
-      });
+      if (socketRef.current) {
+        if (role === 'parent') {
+          socketRef.current.emit('join_bus', 'NB-2026');
+        }
 
-      return () => {
-        socket.disconnect();
-      };
+        const onSync = () => fetchProgress();
+        socketRef.current.on('sync_passengers', onSync);
+
+        return () => {
+          socketRef.current.off('sync_passengers', onSync);
+        };
+      }
     }
   }, [role]);
 
@@ -162,7 +189,7 @@ function App() {
   }
 
   if (role === 'parent') {
-    return <Map onViewPassengers={() => setRole('passenger_list')} onBack={() => setRole('selecting')} />;
+    return <Map onViewPassengers={() => setRole('passenger_list')} onBack={() => setRole('selecting')} socket={socketRef.current} />;
   }
 
   if (role === 'passenger_list') {
